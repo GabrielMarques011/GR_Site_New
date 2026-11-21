@@ -20,6 +20,7 @@ import { slugify } from "@/lib/utils/slugify";
 import type { Category } from "@/types/domain";
 import type { Product } from "@/types/domain";
 
+import { NewProductImagesPicker } from "./new-product-images-picker";
 import { ProductImageManager } from "./product-image-manager";
 
 // zod usa `coerce`/`preprocess` para campos numéricos vindos de <input>, então o
@@ -32,7 +33,7 @@ function toDatetimeLocal(value: string | null): string {
   return value.slice(0, 16);
 }
 
-function buildFormData(values: ProductFormValues): FormData {
+function buildFormData(values: ProductFormValues, newImages: File[]): FormData {
   const formData = new FormData();
   formData.set("name", values.name);
   formData.set("slug", values.slug);
@@ -53,6 +54,7 @@ function buildFormData(values: ProductFormValues): FormData {
   if (values.featured) formData.set("featured", "on");
   if (values.active) formData.set("active", "on");
   formData.set("display_order", String(values.display_order));
+  for (const file of newImages) formData.append("images", file);
   return formData;
 }
 
@@ -74,6 +76,7 @@ export function ProductForm({
   const [isPromotional, setIsPromotional] = useState(
     Boolean(product?.promotional_price),
   );
+  const [newImages, setNewImages] = useState<File[]>([]);
 
   const {
     register,
@@ -139,7 +142,7 @@ export function ProductForm({
   async function onSubmit(values: ProductFormValues) {
     setServerError(null);
     startTransition(async () => {
-      const result = await onSubmitAction(buildFormData(values));
+      const result = await onSubmitAction(buildFormData(values, newImages));
       if (result.error) {
         setServerError(result.error);
         return;
@@ -339,14 +342,16 @@ export function ProductForm({
         </label>
       </div>
 
-      {product && (
-        <div className="border-t border-ink-100 pt-6">
-          <h2 className="mb-3 text-sm font-semibold text-ink-900">
-            Imagens do produto
-          </h2>
+      <div className="border-t border-ink-100 pt-6">
+        <h2 className="mb-3 text-sm font-semibold text-ink-900">
+          Imagens do produto
+        </h2>
+        {product ? (
           <ProductImageManager product={product} />
-        </div>
-      )}
+        ) : (
+          <NewProductImagesPicker onChange={setNewImages} />
+        )}
+      </div>
 
       <div className="flex justify-end gap-3 border-t border-ink-100 pt-6">
         <Button type="button" variant="outline" onClick={() => router.back()}>

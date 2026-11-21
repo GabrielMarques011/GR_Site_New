@@ -1,12 +1,15 @@
 import Link from "next/link";
-import { AtSign, MapPin, PenTool, Sparkles, Truck } from "lucide-react";
+import { AtSign, PenTool, Sparkles, Truck } from "lucide-react";
 
 import { CategoryCard } from "@/components/store/category-card";
+import { HeroBackground } from "@/components/store/hero-background";
+import { LocationCard } from "@/components/store/location-card";
 import { ProductCard } from "@/components/store/product-card";
 import { buttonVariants } from "@/components/ui/button";
 import { getActiveCategories } from "@/services/categories";
 import {
   getFeaturedProducts,
+  getHeroShowcaseImages,
   getPromotionalProducts,
 } from "@/services/products";
 import { getPublicStoreSettings } from "@/services/settings";
@@ -31,36 +34,53 @@ const DIFERENCIAIS = [
 ];
 
 export default async function HomePage() {
-  const [settings, categories, featured, promotional] = await Promise.all([
-    getPublicStoreSettings(),
-    getActiveCategories(),
-    getFeaturedProducts(8),
-    getPromotionalProducts(8),
-  ]);
+  const [settings, categories, featured, promotional, heroImages] =
+    await Promise.all([
+      getPublicStoreSettings(),
+      getActiveCategories(),
+      getFeaturedProducts(8),
+      getPromotionalProducts(8),
+      getHeroShowcaseImages(6),
+    ]);
 
   return (
-    <div className="pb-20">
-      <section className="bg-gradient-to-b from-lilac-100 via-lilac-50 to-white">
-        <div className="container-page flex flex-col items-center gap-6 py-20 text-center">
-          <span className="rounded-full bg-white px-4 py-1 text-xs font-semibold uppercase tracking-wide text-lilac-700 shadow-sm">
-            Personalizados feitos com carinho
-          </span>
-          <h1 className="max-w-2xl font-display text-4xl font-semibold text-ink-900 sm:text-5xl">
-            {settings.store_name}
-          </h1>
-          {settings.slogan && (
-            <p className="max-w-xl text-lg text-ink-700">{settings.slogan}</p>
-          )}
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link href="/produtos" className={buttonVariants({ size: "lg" })}>
-              Ver produtos
-            </Link>
-            <Link
-              href="/contato"
-              className={buttonVariants({ size: "lg", variant: "outline" })}
-            >
-              Falar no WhatsApp
-            </Link>
+    <div>
+      <section className="relative overflow-hidden">
+        <HeroBackground images={heroImages} />
+        <div className="container-page relative flex justify-center py-20 sm:py-28">
+          <div className="flex max-w-2xl flex-col items-center gap-6 rounded-3xl bg-white/85 px-6 py-10 text-center shadow-xl shadow-ink-900/10 backdrop-blur-md sm:px-14 sm:py-14">
+            <span className="rounded-full bg-lilac-100 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-lilac-700">
+              Personalizados feitos com carinho
+            </span>
+            <h1 className="font-display text-4xl font-bold tracking-tight text-ink-900 sm:text-6xl">
+              {settings.store_name}
+            </h1>
+            {settings.slogan && (
+              <p className="max-w-xl text-lg font-medium text-ink-700 sm:text-xl">
+                {settings.slogan}
+              </p>
+            )}
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <Link
+                href="/produtos"
+                className={buttonVariants({
+                  size: "lg",
+                  className: "shadow-lg shadow-lilac-900/20",
+                })}
+              >
+                Ver produtos
+              </Link>
+              <Link
+                href="/contato"
+                className={buttonVariants({
+                  size: "lg",
+                  variant: "outline",
+                  className: "bg-white shadow-sm",
+                })}
+              >
+                Falar no WhatsApp
+              </Link>
+            </div>
           </div>
         </div>
       </section>
@@ -193,9 +213,11 @@ export default async function HomePage() {
       </section>
 
       {settings.address && (
-        <section className="container-page flex items-center gap-3 py-10 text-ink-700">
-          <MapPin className="size-5 text-lilac-600" />
-          <span>{settings.address}</span>
+        <section className="container-page py-10">
+          <h2 className="mb-4 font-display text-2xl font-semibold text-ink-900">
+            Onde estamos
+          </h2>
+          <LocationCard settings={settings} />
         </section>
       )}
     </div>

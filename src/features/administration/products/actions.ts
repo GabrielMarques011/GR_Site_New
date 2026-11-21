@@ -18,6 +18,7 @@ import {
 export interface ProductFormState {
   error: string | null;
   fieldErrors?: Record<string, string>;
+  productId?: string;
 }
 
 function parseProductForm(formData: FormData) {
@@ -64,12 +65,31 @@ export async function createProductAction(
   }
 
   const id = await createProduct(parsed.data);
+
+  // O produto já existe neste ponto — se alguma imagem falhar ao enviar,
+  // o erro não deve impedir a criação. As imagens que derem certo já ficam
+  // salvas; o restante pode ser enviado depois, editando o produto.
+  const imageFiles = formData
+    .getAll("images")
+    .filter((entry): entry is File => entry instanceof File && entry.size > 0);
+
+  const imageErrors: string[] = [];
+  for (const file of imageFiles) {
+    try {
+      await uploadProductImage(id, file);
+    } catch (error) {
+      imageErrors.push(error instanceof Error ? error.message : String(error));
+    }
+  }
+
   await logAuditEvent("product.create", "products", id, {
     name: parsed.data.name,
+    imagesUploaded: imageFiles.length - imageErrors.length,
+    imageErrors: imageErrors.length || undefined,
   });
 
   revalidateProductPaths();
-  return { error: null };
+  return { error: null, productId: id };
 }
 
 export async function updateProductAction(

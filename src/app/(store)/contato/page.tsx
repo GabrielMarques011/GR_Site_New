@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { AtSign, MapPin, MessageCircle } from "lucide-react";
+import { AtSign, MessageCircle } from "lucide-react";
 
+import { LocationCard } from "@/components/store/location-card";
 import { getPublicStoreSettings } from "@/services/settings";
 
 export const metadata: Metadata = {
@@ -61,29 +62,7 @@ export default async function ContatoPage() {
           </a>
         )}
 
-        {settings.address && (
-          <div className="flex items-center gap-4 rounded-2xl border border-ink-100 bg-white p-5">
-            <span className="flex size-12 items-center justify-center rounded-full bg-lilac-100 text-lilac-700">
-              <MapPin className="size-6" />
-            </span>
-            <div>
-              <p className="font-medium text-ink-900">Endereço</p>
-              <p className="text-sm text-ink-500">{settings.address}</p>
-            </div>
-          </div>
-        )}
-
-        {settings.maps_url && (
-          <div className="overflow-hidden rounded-2xl border border-ink-100">
-            <iframe
-              src={settings.maps_url}
-              title="Localização da GR Design"
-              className="h-72 w-full"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
-        )}
+        <LocationCard settings={settings} />
       </div>
     </div>
   );

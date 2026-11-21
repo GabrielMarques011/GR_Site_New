@@ -125,6 +125,29 @@ export async function getPromotionalProducts(limit = 8): Promise<Product[]> {
   return items;
 }
 
+/**
+ * Capas de produtos ativos para usar como fundo decorativo (ex.: hero da
+ * home). Prioriza destaques, depois completa com os demais produtos
+ * ativos, sempre uma imagem por produto, sem repetir.
+ */
+export async function getHeroShowcaseImages(limit = 6): Promise<string[]> {
+  const [{ items: featuredItems }, { items: recentItems }] = await Promise.all([
+    getPublicProducts({ featuredOnly: true, pageSize: limit }),
+    getPublicProducts({ pageSize: limit }),
+  ]);
+
+  const urls: string[] = [];
+  for (const product of [...featuredItems, ...recentItems]) {
+    const cover = product.images[0]?.image_url;
+    if (cover && !urls.includes(cover)) {
+      urls.push(cover);
+    }
+    if (urls.length >= limit) break;
+  }
+
+  return urls;
+}
+
 /** Busca produtos por ID para revalidar preços no servidor (carrinho/WhatsApp). */
 export async function getProductsByIds(ids: string[]): Promise<Product[]> {
   if (ids.length === 0) return [];
