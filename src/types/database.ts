@@ -85,6 +85,30 @@ export type AuditLogRow = {
   created_at: string;
 };
 
+export type OrderStatus = "em_andamento" | "concluido" | "recusado";
+
+export type OrderItemSnapshot = {
+  product_id: string;
+  name: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+};
+
+export type OrderRow = {
+  id: string;
+  customer_name: string;
+  customer_phone: string;
+  items: OrderItemSnapshot[];
+  subtotal: number;
+  discount_percent: number;
+  total: number;
+  is_first_purchase: boolean;
+  status: OrderStatus;
+  created_at: string;
+  updated_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -132,12 +156,28 @@ export type Database = {
         Update: Partial<AuditLogRow>;
         Relationships: [];
       };
+      orders: {
+        Row: OrderRow;
+        Insert: Partial<OrderRow> & {
+          customer_name: string;
+          customer_phone: string;
+          items: OrderItemSnapshot[];
+          subtotal: number;
+          total: number;
+        };
+        Update: Partial<OrderRow>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
       is_admin: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      count_orders_by_phone: {
+        Args: { p_phone: string };
+        Returns: number;
       };
     };
     Enums: Record<string, never>;

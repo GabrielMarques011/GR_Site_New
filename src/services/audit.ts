@@ -12,7 +12,8 @@ export type AuditAction =
   | "category.create"
   | "category.update"
   | "category.delete"
-  | "settings.update";
+  | "settings.update"
+  | "order.status_update";
 
 /**
  * Registra uma ação administrativa relevante. Nunca recebe segredos,

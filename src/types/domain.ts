@@ -1,11 +1,16 @@
 import type {
   CategoryRow,
+  OrderItemSnapshot,
+  OrderRow,
+  OrderStatus,
   ProductImageRow,
   ProductRow,
   StoreSettingsRow,
 } from "./database";
 
-export type { StoreSettingsRow };
+export type { StoreSettingsRow, OrderItemSnapshot, OrderStatus };
+
+export type Order = OrderRow;
 
 export type Category = CategoryRow;
 export type ProductImage = ProductImageRow;

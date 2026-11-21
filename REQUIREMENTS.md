@@ -17,6 +17,8 @@ checklist de cobertura.
 | Carrinho (adicionar/remover/alterar quantidade/subtotal/total)                                                          | `src/features/cart/*`                                                            |
 | Preço recalculado no servidor antes do checkout                                                                         | `src/features/cart/revalidate-cart.ts`                                           |
 | Finalização via WhatsApp com itens, preços e total                                                                      | `src/lib/utils/whatsapp.ts`, `src/features/cart/cart-view.tsx`                   |
+| Checkout pede nome + WhatsApp e registra o pedido no histórico                                                          | `src/features/cart/checkout-form.tsx`, `src/features/cart/checkout-actions.ts`   |
+| Desconto de 5% automático na primeira compra (por telefone)                                                             | `checkout-actions.ts` (`countOrdersByPhone` + `count_orders_by_phone` no banco)  |
 | Sem pagamento online / sem afirmar pedido confirmado                                                                    | Não implementado de propósito; texto deixa claro que é "combinado pelo WhatsApp" |
 
 ## Painel administrativo
@@ -32,17 +34,18 @@ checklist de cobertura.
 | Promoções (preço promocional, datas, selo, preço calculado)                                                  | `src/features/promotions/pricing.ts`                                                |
 | Configurações da loja (`store_settings`)                                                                     | `src/features/administration/settings/*`                                            |
 | Auditoria de ações administrativas                                                                           | `src/services/audit.ts`, `src/app/administracao/(painel)/auditoria/`                |
+| Histórico de pedidos com status (em andamento/concluído/recusado)                                            | `src/features/administration/orders/*`, `src/app/administracao/(painel)/historico/` |
 
 ## Infraestrutura e segurança
 
-| Requisito                                                                | Onde                                                                       |
-| ------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| Reaproveitar Supabase existente (sem criar novo projeto)                 | `src/lib/supabase/*` aponta para `jcloztrhwgtvxypybzav`                    |
-| Variáveis de ambiente sem segredo no frontend                            | `.env.example`, `src/lib/supabase/env.ts`                                  |
-| `.gitignore` sem credenciais                                             | ver `.gitignore`                                                           |
-| Migrations incrementais, não destrutivas, com aprovação antes de aplicar | `supabase/migrations/0001_security_hardening.sql` (proposta, não aplicada) |
-| Auditoria das políticas de RLS                                           | `SECURITY.md`                                                              |
-| Preparo para Vercel + GitHub                                             | `DEPLOYMENT.md`                                                            |
+| Requisito                                                                | Onde                                                                                             |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| Reaproveitar Supabase existente (sem criar novo projeto)                 | `src/lib/supabase/*` aponta para `jcloztrhwgtvxypybzav`                                          |
+| Variáveis de ambiente sem segredo no frontend                            | `.env.example`, `src/lib/supabase/env.ts`                                                        |
+| `.gitignore` sem credenciais                                             | ver `.gitignore`                                                                                 |
+| Migrations incrementais, não destrutivas, com aprovação antes de aplicar | `supabase/migrations/0001_security_hardening.sql` e `0002_orders.sql` (propostas, não aplicadas) |
+| Auditoria das políticas de RLS                                           | `SECURITY.md`                                                                                    |
+| Preparo para Vercel + GitHub                                             | `DEPLOYMENT.md`                                                                                  |
 
 ## Fora do escopo desta versão (explicitamente, por pedido do briefing)
 

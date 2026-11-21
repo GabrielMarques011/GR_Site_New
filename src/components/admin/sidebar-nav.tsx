@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  History,
   LayoutDashboard,
   ListTree,
   LogOut,
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   },
   { href: "/administracao/produtos", label: "Produtos", icon: Package },
   { href: "/administracao/categorias", label: "Categorias", icon: ListTree },
+  { href: "/administracao/historico", label: "Histórico", icon: History },
   {
     href: "/administracao/configuracoes",
     label: "Configurações",

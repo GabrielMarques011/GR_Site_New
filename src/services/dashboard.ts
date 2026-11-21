@@ -9,6 +9,7 @@ export interface DashboardStats {
   totalCategories: number;
   promotionalProducts: number;
   featuredProducts: number;
+  ordersInProgress: number;
 }
 
 async function countProducts(filter?: {
@@ -47,16 +48,38 @@ async function countCategories(): Promise<number> {
   return count ?? 0;
 }
 
+/**
+ * Retorna 0 em vez de lançar se a tabela `orders` ainda não existir —
+ * essa migration (0002_orders.sql) depende de aprovação manual, então o
+ * resto do dashboard não pode quebrar enquanto ela não for aplicada.
+ */
+async function countOrdersInProgress(): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "em_andamento");
+
+  if (error) return 0;
+  return count ?? 0;
+}
+
 export async function getDashboardStats(): Promise<DashboardStats> {
   const supabase = await createClient();
 
-  const [totalProducts, activeProducts, totalCategories, featuredProducts] =
-    await Promise.all([
-      countProducts(),
-      countProducts({ active: true }),
-      countCategories(),
-      countProducts({ featured: true }),
-    ]);
+  const [
+    totalProducts,
+    activeProducts,
+    totalCategories,
+    featuredProducts,
+    ordersInProgress,
+  ] = await Promise.all([
+    countProducts(),
+    countProducts({ active: true }),
+    countCategories(),
+    countProducts({ featured: true }),
+    countOrdersInProgress(),
+  ]);
 
   const nowIso = new Date().toISOString();
   const { count: promotionalProducts, error: promoError } = await supabase
@@ -80,5 +103,6 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     totalCategories,
     promotionalProducts: promotionalProducts ?? 0,
     featuredProducts,
+    ordersInProgress,
   };
 }

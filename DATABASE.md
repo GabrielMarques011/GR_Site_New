@@ -21,6 +21,7 @@
 | `product_images` | `id`, `product_id`, `storage_path`, `image_url`, `alt_text`, `display_order`, `created_at`                               |
 | `store_settings` | `id`, `store_name`, `slogan`, `about_text`, `whatsapp`, `instagram_url`, `address`, `maps_url`, `logo_url`, `updated_at` |
 | `audit_logs`     | `id`, `user_id`, `action`, `entity`, `entity_id`, `details`, `created_at`                                                |
+| `orders`         | **Criada pela migration `0002_orders.sql` (proposta, não aplicada)** — ver abaixo                                        |
 
 Campos de `products`: `id`, `category_id`, `name`, `slug`, `description`,
 `price`, `promotional_price`, `promotion_start`, `promotion_end`, `sku`,
@@ -64,6 +65,20 @@ executada manualmente (SQL Editor do Supabase ou `supabase db push`).
   tabelas e do bucket `products-images`, e fixa o `search_path` de
   `public.is_admin()`. Não altera dados, não recria tabelas. Ver SECURITY.md
   para a justificativa de cada policy.
+- `0002_orders.sql` — cria a tabela `orders` (histórico de pedidos
+  enviados pelo WhatsApp: nome, telefone, itens, total, status) e a
+  função `public.count_orders_by_phone()`, usada para o desconto de 5% na
+  primeira compra. **Enquanto essa migration não for aplicada**, o
+  checkout pelo WhatsApp continua funcionando normalmente (o código foi
+  escrito para degradar sem quebrar), mas: nenhum pedido fica registrado
+  no histórico, a página Histórico do painel mostra um aviso de erro, e
+  todo cliente é tratado como "primeira compra" (ganha os 5%, já que não
+  há como checar o histórico). Ver SECURITY.md para o desenho de RLS.
+
+Campos de `orders`: `id`, `customer_name`, `customer_phone`, `items`
+(jsonb — lista de `{product_id, name, quantity, unit_price, subtotal}`),
+`subtotal`, `discount_percent`, `total`, `is_first_purchase`, `status`
+(`em_andamento` | `concluido` | `recusado`), `created_at`, `updated_at`.
 
 ### Regra para novas migrations
 

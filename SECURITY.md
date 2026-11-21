@@ -85,9 +85,37 @@ exigem `public.is_admin()`; e o caminho do arquivo precisa começar com
 `products/` ou `categories/` (os únicos prefixos usados pela aplicação),
 para reduzir o bucket virar um "HD na nuvem" para qualquer outro arquivo.
 
+## `orders` — histórico de pedidos (migration `0002_orders.sql`)
+
+Essa tabela guarda nome e telefone de clientes — dado pessoal — então o
+desenho de RLS é mais cuidadoso que o das outras tabelas:
+
+- **Nenhum SELECT público.** Diferente de `products`/`categories`, aqui
+  não existe "leitura pública dos ativos" — um visitante não pode listar
+  pedidos (nem os próprios, nem de ninguém).
+- **INSERT público, mas restrito por `WITH CHECK`**: qualquer visitante
+  pode criar um pedido (é o próprio ato de finalizar pelo WhatsApp), mas a
+  policy valida formato básico (nome não vazio, telefone com 10-15
+  dígitos, itens não vazios, `status` tem que nascer como
+  `em_andamento` — ninguém de fora consegue inserir um pedido já
+  "concluído").
+- **"Já comprei antes?" sem expor dados de ninguém**: em vez de dar
+  SELECT público (que vazaria nome/telefone de todo mundo), a pergunta
+  "esse telefone já tem pedido?" passa pela função
+  `count_orders_by_phone()` — `SECURITY DEFINER`, com `search_path`
+  travado (mesmo padrão do `is_admin()`), que devolve só um número.
+  Usada tanto no formulário de checkout (`features/cart/checkout-actions.ts`)
+  quanto, no servidor, para decidir o desconto de 5%.
+- **UPDATE/DELETE só para administradoras** (mudar o status do pedido,
+  ou remover um pedido de teste/spam).
+
 ## Checklist de segurança para produção (antes de divulgar o domínio)
 
 - [ ] Revisar e aplicar `0001_security_hardening.sql` no projeto Supabase.
+- [ ] Revisar e aplicar `0002_orders.sql` (necessário para o histórico de
+      pedidos e o desconto de primeira compra funcionarem de verdade — sem
+      ela, o checkout continua funcionando, mas sem gravar histórico, e
+      todo cliente é tratado como "primeira compra").
 - [ ] Confirmar que `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` na Vercel é a
       chave anon/publicável (nunca `service_role`/`sb_secret_`).
 - [ ] Rodar `npm run build` e inspecionar o bundle client-side em busca de
