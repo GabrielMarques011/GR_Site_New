@@ -12,9 +12,12 @@ export default function AdminLoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-lilac-50 px-4">
       <div className="w-full max-w-sm rounded-2xl border border-ink-100 bg-white p-8 shadow-sm">
         <div className="mb-6 text-center">
-          <span className="inline-flex size-12 items-center justify-center rounded-full bg-lilac-100 font-display text-lg font-semibold text-lilac-700">
-            GR
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/gr-design-logo.svg"
+            alt="GR Design"
+            className="mx-auto h-24 w-auto"
+          />
           <h1 className="mt-4 font-display text-xl font-semibold text-ink-900">
             Painel administrativo
           </h1>

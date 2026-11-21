@@ -67,6 +67,8 @@ export function AdminShell({
           >
             <Menu className="size-5" />
           </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/brand/gr-monogram.svg" alt="" className="h-6 w-auto" />
           <span className="font-display text-sm font-semibold text-lilac-700">
             GR Design — Painel
           </span>

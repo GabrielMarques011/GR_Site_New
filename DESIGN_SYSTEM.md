@@ -1,7 +1,7 @@
 # Design System — GR Design
 
-Identidade visual própria, criada para este projeto (não há logo oficial na
-pasta — ver "Logo" abaixo).
+Identidade visual própria, criada para este projeto, usando a logo oficial
+fornecida pela proprietária (ver "Logo" abaixo).
 
 ## Paleta (definida em `src/app/globals.css`)
 
@@ -44,8 +44,15 @@ Convenções:
 
 ## Logo
 
-Não havia arquivo de logo na pasta do projeto. O cabeçalho da loja e o
-painel mostram um placeholder circular com "GR" sempre que
-`store_settings.logo_url` estiver vazio, e trocam automaticamente pela
-logo real assim que uma URL for configurada em
-Administração → Configurações.
+Arquivos oficiais em `public/brand/` (cor `#836BBC`, mesmo tom de roxo em
+toda a marca):
+
+- `gr-monogram.svg` — só o monograma "GR". Usado no cabeçalho da loja, na
+  barra lateral/topo do painel e como favicon (`src/app/icon.svg`).
+- `gr-design-logo.svg` — a marca completa "GR Design" (monograma + palavra
+  "Design"). Usado na tela de login do painel, onde há mais espaço vertical.
+
+Em todo lugar que exibe a logo, `store_settings.logo_url` (configurável em
+Administração → Configurações) tem prioridade — a arte oficial acima é
+usada como *fallback* sempre que esse campo estiver vazio, nunca o
+contrário.

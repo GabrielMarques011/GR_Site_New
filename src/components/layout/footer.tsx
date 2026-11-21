@@ -12,7 +12,13 @@ export function Footer({ settings }: { settings: PublicStoreSettings }) {
     <footer className="mt-16 border-t border-ink-100 bg-lilac-50/60">
       <div className="container-page grid gap-10 py-12 md:grid-cols-3">
         <div>
-          <h3 className="font-display text-lg font-semibold text-lilac-900">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={settings.logo_url || "/brand/gr-monogram.svg"}
+            alt={settings.store_name}
+            className="h-10 w-auto"
+          />
+          <h3 className="mt-3 font-display text-lg font-semibold text-lilac-900">
             {settings.store_name}
           </h3>
           {settings.slogan && (

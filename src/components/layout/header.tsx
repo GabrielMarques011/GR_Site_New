@@ -27,18 +27,12 @@ export function Header({ settings }: { settings: PublicStoreSettings }) {
           href="/"
           className="flex items-center gap-2 font-display text-lg font-semibold text-lilac-800"
         >
-          {settings.logo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={settings.logo_url}
-              alt={settings.store_name}
-              className="h-9 w-auto"
-            />
-          ) : (
-            <span className="flex size-9 items-center justify-center rounded-full bg-lilac-100 text-lilac-700">
-              GR
-            </span>
-          )}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={settings.logo_url || "/brand/gr-monogram.svg"}
+            alt={settings.store_name}
+            className="h-9 w-auto"
+          />
           <span>{settings.store_name}</span>
         </Link>
 

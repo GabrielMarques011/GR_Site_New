@@ -46,9 +46,8 @@ export function AdminSidebarNav({
   return (
     <>
       <div className="flex items-center gap-2 border-b border-ink-100 px-5 py-5">
-        <span className="flex size-9 items-center justify-center rounded-full bg-lilac-100 font-display font-semibold text-lilac-700">
-          GR
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/gr-monogram.svg" alt="" className="h-9 w-auto" />
         <div>
           <p className="text-sm font-semibold text-ink-900">GR Design</p>
           <p className="text-xs text-ink-500">Painel administrativo</p>
