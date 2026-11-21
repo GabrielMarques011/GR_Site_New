@@ -218,10 +218,11 @@ create policy "audit_logs_admin_insert"
 -- 8. Storage: bucket products-images
 --    - Leitura pública (bucket já é público para visualização).
 --    - Upload/alteração/exclusão restritos a administradores.
---    - Caminho precisa começar com "products/" ou "categories/" (os únicos
---      prefixos usados pela aplicação — ver src/services/product-images.ts
---      e src/services/category-images.ts), reduzindo a superfície de uso
---      indevido do bucket para armazenar outros arquivos.
+--    - Caminho precisa começar com "products/", "categories/" ou "branding/"
+--      (os únicos prefixos usados pela aplicação — ver
+--      src/services/product-images.ts, src/services/category-images.ts e
+--      src/services/branding.ts), reduzindo a superfície de uso indevido do
+--      bucket para armazenar outros arquivos.
 -- -----------------------------------------------------------------------------
 do $$
 declare
@@ -246,7 +247,11 @@ create policy "products_images_admin_insert"
   to authenticated
   with check (
     bucket_id = 'products-images'
-    and (name like 'products/%' or name like 'categories/%')
+    and (
+      name like 'products/%'
+      or name like 'categories/%'
+      or name like 'branding/%'
+    )
     and public.is_admin()
   );
 

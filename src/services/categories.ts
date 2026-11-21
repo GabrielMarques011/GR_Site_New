@@ -79,7 +79,6 @@ function toCategoryPayload(values: CategoryFormValues) {
     name: values.name,
     slug: values.slug,
     description: values.description || null,
-    image_url: values.image_url || null,
     display_order: values.display_order,
     active: values.active,
   };

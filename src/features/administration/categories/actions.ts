@@ -22,7 +22,6 @@ function parseCategoryForm(formData: FormData) {
     name: formData.get("name"),
     slug: formData.get("slug"),
     description: formData.get("description"),
-    image_url: formData.get("image_url") || null,
     display_order: formData.get("display_order") || 0,
     active: formData.get("active") === "on",
   });
@@ -53,6 +52,29 @@ export async function createCategoryAction(
   }
 
   const id = await createCategory(parsed.data);
+
+  // A categoria já existe neste ponto — se o upload da imagem falhar, o
+  // erro é só registrado na auditoria, nunca bloqueia a criação. A imagem
+  // pode ser enviada (ou reenviada) depois, na edição da categoria.
+  const imageFile = formData.get("image");
+  if (imageFile instanceof File && imageFile.size > 0) {
+    try {
+      const imageUrl = await uploadCategoryImage(id, imageFile);
+      const supabase = await createClient();
+      await supabase
+        .from("categories")
+        .update({ image_url: imageUrl })
+        .eq("id", id);
+    } catch (error) {
+      await logAuditEvent("category.create", "categories", id, {
+        name: parsed.data.name,
+        imageError: error instanceof Error ? error.message : String(error),
+      });
+      revalidateCategoryPaths();
+      return { error: null };
+    }
+  }
+
   await logAuditEvent("category.create", "categories", id, {
     name: parsed.data.name,
   });
@@ -124,4 +146,19 @@ export async function uploadCategoryImageAction(
       error: error instanceof Error ? error.message : "Falha ao enviar imagem.",
     };
   }
+}
+
+export async function removeCategoryImageAction(
+  categoryId: string,
+): Promise<void> {
+  const supabase = await createClient();
+  await supabase
+    .from("categories")
+    .update({ image_url: null })
+    .eq("id", categoryId);
+
+  await logAuditEvent("category.update", "categories", categoryId, {
+    imageRemoved: true,
+  });
+  revalidateCategoryPaths();
 }

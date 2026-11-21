@@ -11,7 +11,6 @@ export const categoryFormSchema = z.object({
       "Use apenas letras minúsculas, números e hífens",
     ),
   description: z.string().trim().max(1000).optional().or(z.literal("")),
-  image_url: z.string().url().nullable().optional(),
   display_order: z.coerce.number().int().min(0).default(0),
   active: z.boolean().default(true),
 });

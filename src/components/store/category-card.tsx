@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
 
+import { isAllowedImageUrl } from "@/lib/utils/image-host";
 import type { Category } from "@/types/domain";
 
 export function CategoryCard({ category }: { category: Category }) {
@@ -10,7 +11,7 @@ export function CategoryCard({ category }: { category: Category }) {
       href={`/categorias/${category.slug}`}
       className="focus-ring group relative flex aspect-[4/3] items-end overflow-hidden rounded-2xl bg-lilac-100"
     >
-      {category.image_url ? (
+      {isAllowedImageUrl(category.image_url) ? (
         <Image
           src={category.image_url}
           alt={category.name}

@@ -4,12 +4,14 @@ import { ImageOff } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { computeProductPricing } from "@/features/promotions/pricing";
+import { isAllowedImageUrl } from "@/lib/utils/image-host";
 import type { Product } from "@/types/domain";
 
 import { PriceDisplay } from "./price-display";
 
 export function ProductCard({ product }: { product: Product }) {
   const cover = product.images[0];
+  const hasCoverImage = isAllowedImageUrl(cover?.image_url);
   const { isPromotionActive } = computeProductPricing(product);
   const outOfStock =
     product.stock_quantity != null && product.stock_quantity <= 0;
@@ -20,7 +22,7 @@ export function ProductCard({ product }: { product: Product }) {
       className="focus-ring group flex flex-col overflow-hidden rounded-2xl border border-ink-100 bg-white transition-shadow hover:shadow-md hover:shadow-ink-900/10"
     >
       <div className="relative aspect-square w-full overflow-hidden bg-lilac-50">
-        {cover ? (
+        {hasCoverImage ? (
           <Image
             src={cover.image_url}
             alt={cover.alt_text ?? product.name}

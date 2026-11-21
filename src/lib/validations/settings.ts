@@ -13,7 +13,6 @@ export const storeSettingsFormSchema = z.object({
   instagram_url: z.string().url().optional().or(z.literal("")),
   address: z.string().trim().max(300).optional().or(z.literal("")),
   maps_url: z.string().url().optional().or(z.literal("")),
-  logo_url: z.string().url().optional().or(z.literal("")),
 });
 
 export type StoreSettingsFormValues = z.infer<typeof storeSettingsFormSchema>;

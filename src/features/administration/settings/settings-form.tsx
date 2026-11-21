@@ -16,6 +16,8 @@ import {
 } from "@/lib/validations/settings";
 import type { StoreSettingsRow } from "@/types/database";
 
+import { LogoUploader } from "./logo-uploader";
+
 function buildFormData(values: StoreSettingsFormValues): FormData {
   const formData = new FormData();
   for (const [key, value] of Object.entries(values)) {
@@ -52,7 +54,6 @@ export function SettingsForm({
       instagram_url: settings.instagram_url ?? "",
       address: settings.address ?? "",
       maps_url: settings.maps_url ?? "",
-      logo_url: settings.logo_url ?? "",
     },
   });
 
@@ -130,13 +131,15 @@ export function SettingsForm({
         <Input id="maps_url" {...register("maps_url")} />
       </Field>
 
-      <Field
-        label="URL da logo"
-        htmlFor="logo_url"
-        error={errors.logo_url?.message}
-      >
-        <Input id="logo_url" {...register("logo_url")} />
-      </Field>
+      <div>
+        <span className="mb-1.5 block text-sm font-medium text-ink-900">
+          Logo
+        </span>
+        <LogoUploader
+          settingsId={settings.id}
+          currentLogoUrl={settings.logo_url}
+        />
+      </div>
 
       <div className="flex justify-end border-t border-ink-100 pt-6">
         <Button type="submit" isLoading={pending}>

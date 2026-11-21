@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ImagePlus } from "lucide-react";
 import type { z } from "zod";
 
 import { Alert } from "@/components/ui/alert";
@@ -22,14 +23,17 @@ import { CategoryImageUploader } from "./category-image-uploader";
 
 type CategoryFormInput = z.input<typeof categoryFormSchema>;
 
-function buildFormData(values: CategoryFormValues): FormData {
+function buildFormData(
+  values: CategoryFormValues,
+  imageFile: File | null,
+): FormData {
   const formData = new FormData();
   formData.set("name", values.name);
   formData.set("slug", values.slug);
   formData.set("description", values.description ?? "");
-  formData.set("image_url", values.image_url ?? "");
   formData.set("display_order", String(values.display_order));
   if (values.active) formData.set("active", "on");
+  if (imageFile) formData.set("image", imageFile);
   return formData;
 }
 
@@ -46,6 +50,8 @@ export function CategoryForm({
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [slugEdited, setSlugEdited] = useState(Boolean(category));
+  const [newImageFile, setNewImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -60,7 +66,6 @@ export function CategoryForm({
           name: category.name,
           slug: category.slug,
           description: category.description ?? "",
-          image_url: category.image_url,
           display_order: category.display_order,
           active: category.active,
         }
@@ -68,7 +73,6 @@ export function CategoryForm({
           name: "",
           slug: "",
           description: "",
-          image_url: null,
           display_order: 0,
           active: true,
         },
@@ -86,7 +90,7 @@ export function CategoryForm({
   async function onSubmit(values: CategoryFormValues) {
     setServerError(null);
     startTransition(async () => {
-      const result = await onSubmitAction(buildFormData(values));
+      const result = await onSubmitAction(buildFormData(values, newImageFile));
       if (result.error) {
         setServerError(result.error);
         return;
@@ -128,27 +132,40 @@ export function CategoryForm({
         <Textarea id="description" rows={3} {...register("description")} />
       </Field>
 
-      {category ? (
-        <div>
-          <span className="mb-1.5 block text-sm font-medium text-ink-900">
-            Imagem de capa
-          </span>
+      <div>
+        <span className="mb-1.5 block text-sm font-medium text-ink-900">
+          Imagem de capa
+        </span>
+
+        {category ? (
           <CategoryImageUploader
             categoryId={category.id}
-            currentImageUrl={watch("image_url") ?? null}
+            currentImageUrl={category.image_url}
           />
-          <input type="hidden" {...register("image_url")} />
-        </div>
-      ) : (
-        <Field
-          label="URL da imagem de capa (opcional)"
-          htmlFor="image_url"
-          error={errors.image_url?.message}
-          hint="Após criar a categoria você poderá fazer upload direto da imagem"
-        >
-          <Input id="image_url" {...register("image_url")} />
-        </Field>
-      )}
+        ) : (
+          <div>
+            <label className="focus-ring inline-flex cursor-pointer items-center gap-2 rounded-lg border border-ink-300 px-3 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50">
+              <ImagePlus className="size-4" />
+              {newImageFile
+                ? newImageFile.name
+                : "Escolher imagem (do computador ou celular)"}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={(event) =>
+                  setNewImageFile(event.target.files?.[0] ?? null)
+                }
+              />
+            </label>
+            <p className="mt-1.5 text-xs text-ink-500">
+              Opcional — você também pode adicionar a imagem depois, editando a
+              categoria.
+            </p>
+          </div>
+        )}
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field

@@ -7,6 +7,7 @@ import { ImageOff, Pencil, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils/currency";
+import { isAllowedImageUrl } from "@/lib/utils/image-host";
 import type { Product } from "@/types/domain";
 
 import { deleteProductAction, toggleProductActiveAction } from "./actions";
@@ -52,7 +53,7 @@ export function ProductsTable({ products }: { products: Product[] }) {
             >
               <td className="flex items-center gap-3 px-4 py-3">
                 <div className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-lilac-50">
-                  {product.images[0] ? (
+                  {isAllowedImageUrl(product.images[0]?.image_url) ? (
                     <Image
                       src={product.images[0].image_url}
                       alt={product.name}

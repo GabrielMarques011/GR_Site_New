@@ -6,6 +6,7 @@ import { useTransition } from "react";
 import { ImageOff, Pencil, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { isAllowedImageUrl } from "@/lib/utils/image-host";
 import type { Category } from "@/types/domain";
 
 import { deleteCategoryAction } from "./actions";
@@ -50,7 +51,7 @@ export function CategoriesTable({ categories }: { categories: Category[] }) {
             >
               <td className="flex items-center gap-3 px-4 py-3">
                 <div className="relative size-10 shrink-0 overflow-hidden rounded-lg bg-lilac-50">
-                  {category.image_url ? (
+                  {isAllowedImageUrl(category.image_url) ? (
                     <Image
                       src={category.image_url}
                       alt={category.name}

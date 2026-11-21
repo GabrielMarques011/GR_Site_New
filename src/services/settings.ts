@@ -72,7 +72,6 @@ export async function updateStoreSettings(
       instagram_url: values.instagram_url || null,
       address: values.address || null,
       maps_url: values.maps_url || null,
-      logo_url: values.logo_url || null,
     })
     .eq("id", id);
 
