@@ -18,11 +18,11 @@ export function HeroBackground({ images }: { images: string[] }) {
   const segmentPercent = 100 / Math.max(photos.length, 1);
 
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-lilac-100 via-lilac-50 to-white">
       {/* Manchas decorativas — sempre visíveis, garantem um fundo bonito mesmo sem fotos */}
-      <div className="absolute -left-24 -top-24 size-96 rounded-full bg-lilac-300/40 blur-3xl" />
-      <div className="absolute -right-16 top-10 size-80 rounded-full bg-lilac-400/30 blur-3xl" />
-      <div className="absolute bottom-0 left-1/3 size-72 rounded-full bg-lilac-200/50 blur-3xl" />
+      <div className="absolute -left-24 -top-24 size-96 rounded-full bg-lilac-300/70 blur-2xl" />
+      <div className="absolute -right-16 top-10 size-80 rounded-full bg-lilac-400/60 blur-2xl" />
+      <div className="absolute bottom-0 left-1/3 size-72 rounded-full bg-lilac-300/70 blur-2xl" />
 
       {/*
         As fotos ficam escondidas no mobile de propósito: numa tela estreita
@@ -64,8 +64,14 @@ export function HeroBackground({ images }: { images: string[] }) {
         </div>
       )}
 
-      {/* Véu claro por cima das fotos para o texto continuar legível */}
-      <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/40 to-white/90" />
+      {/*
+        Véu claro só quando a foto está visível (sm+), pra garantir
+        legibilidade do texto por cima dela. No mobile (sem foto), o
+        gradiente lilás decorativo fica livre pra aparecer de verdade.
+      */}
+      {photos.length > 0 && (
+        <div className="absolute inset-0 hidden bg-gradient-to-b from-white/60 via-white/40 to-white/90 sm:block" />
+      )}
     </div>
   );
 }
