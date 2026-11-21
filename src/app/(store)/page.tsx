@@ -7,11 +7,7 @@ import { LocationCard } from "@/components/store/location-card";
 import { ProductCard } from "@/components/store/product-card";
 import { buttonVariants } from "@/components/ui/button";
 import { getActiveCategories } from "@/services/categories";
-import {
-  getFeaturedProducts,
-  getHeroShowcaseImages,
-  getPromotionalProducts,
-} from "@/services/products";
+import { getHomeShowcase } from "@/services/products";
 import { getPublicStoreSettings } from "@/services/settings";
 
 const DIFERENCIAIS = [
@@ -34,13 +30,11 @@ const DIFERENCIAIS = [
 ];
 
 export default async function HomePage() {
-  const [settings, categories, featured, promotional, heroImages] =
+  const [settings, categories, { featured, promotional, heroImages }] =
     await Promise.all([
       getPublicStoreSettings(),
       getActiveCategories(),
-      getFeaturedProducts(8),
-      getPromotionalProducts(8),
-      getHeroShowcaseImages(6),
+      getHomeShowcase({ featured: 8, promotional: 8, heroImages: 6 }),
     ]);
 
   return (

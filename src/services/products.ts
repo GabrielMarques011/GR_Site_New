@@ -109,43 +109,42 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
   return data ? sortImages(data as unknown as Product) : null;
 }
 
-export async function getFeaturedProducts(limit = 8): Promise<Product[]> {
-  const { items } = await getPublicProducts({
-    featuredOnly: true,
-    pageSize: limit,
-  });
-  return items;
-}
-
-export async function getPromotionalProducts(limit = 8): Promise<Product[]> {
-  const { items } = await getPublicProducts({
-    promotionsOnly: true,
-    pageSize: limit,
-  });
-  return items;
+export interface HomeShowcase {
+  featured: Product[];
+  promotional: Product[];
+  heroImages: string[];
 }
 
 /**
- * Capas de produtos ativos para usar como fundo decorativo (ex.: hero da
- * home). Prioriza destaques, depois completa com os demais produtos
- * ativos, sempre uma imagem por produto, sem repetir.
+ * Busca TODOS os produtos ativos uma única vez e deriva, a partir desse
+ * mesmo resultado, os destaques, as promoções e as fotos do hero da home —
+ * em vez de repetir a mesma consulta ao Supabase três vezes (como a home
+ * fazia antes, com `getFeaturedProducts` + `getPromotionalProducts` +
+ * `getHeroShowcaseImages` cada uma buscando o catálogo de novo).
  */
-export async function getHeroShowcaseImages(limit = 6): Promise<string[]> {
-  const [{ items: featuredItems }, { items: recentItems }] = await Promise.all([
-    getPublicProducts({ featuredOnly: true, pageSize: limit }),
-    getPublicProducts({ pageSize: limit }),
-  ]);
+export async function getHomeShowcase(
+  limits: { featured?: number; promotional?: number; heroImages?: number } = {},
+): Promise<HomeShowcase> {
+  const { items: allActive } = await getPublicProducts({ pageSize: 100 });
 
-  const urls: string[] = [];
-  for (const product of [...featuredItems, ...recentItems]) {
+  const featured = allActive
+    .filter((product) => product.featured)
+    .slice(0, limits.featured ?? 8);
+
+  const promotional = allActive
+    .filter((product) => computeProductPricing(product).isPromotionActive)
+    .slice(0, limits.promotional ?? 8);
+
+  const heroImages: string[] = [];
+  for (const product of [...featured, ...allActive]) {
     const cover = product.images[0]?.image_url;
-    if (cover && !urls.includes(cover)) {
-      urls.push(cover);
+    if (cover && !heroImages.includes(cover)) {
+      heroImages.push(cover);
     }
-    if (urls.length >= limit) break;
+    if (heroImages.length >= (limits.heroImages ?? 6)) break;
   }
 
-  return urls;
+  return { featured, promotional, heroImages };
 }
 
 /** Busca produtos por ID para revalidar preços no servidor (carrinho/WhatsApp). */
