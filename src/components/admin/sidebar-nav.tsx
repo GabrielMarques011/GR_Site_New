@@ -31,11 +31,20 @@ const NAV_ITEMS = [
   { href: "/administracao/auditoria", label: "Auditoria", icon: ScrollText },
 ];
 
-export function AdminSidebar({ adminName }: { adminName: string }) {
+/** Conteúdo da navegação do painel — sem o <aside> ao redor, para o
+ * posicionamento (fixo no mobile, estático no desktop) ficar a cargo de
+ * quem usa este componente (ver AdminShell). */
+export function AdminSidebarNav({
+  adminName,
+  onNavigate,
+}: {
+  adminName: string;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-ink-100 bg-white">
+    <>
       <div className="flex items-center gap-2 border-b border-ink-100 px-5 py-5">
         <span className="flex size-9 items-center justify-center rounded-full bg-lilac-100 font-display font-semibold text-lilac-700">
           GR
@@ -53,6 +62,7 @@ export function AdminSidebar({ adminName }: { adminName: string }) {
             <Link
               key={href}
               href={href}
+              onClick={onNavigate}
               className={cn(
                 "focus-ring flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium",
                 active
@@ -81,6 +91,6 @@ export function AdminSidebar({ adminName }: { adminName: string }) {
           </button>
         </form>
       </div>
-    </aside>
+    </>
   );
 }
