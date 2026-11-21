@@ -17,12 +17,21 @@ export function HeroBackground({ images }: { images: string[] }) {
   const fadePercent = (FADE_SECONDS / totalDuration) * 100;
   const segmentPercent = 100 / Math.max(photos.length, 1);
 
+  // Máscara que faz TODO o fundo (gradiente, manchas e fotos) desvanecer
+  // até transparente antes da borda inferior. Sem ela, qualquer mancha
+  // desfocada que encostasse na borda era cortada em linha reta pelo
+  // overflow-hidden — parecendo um "corte" em vez de um degradê terminando.
+  const fadeOutMask = "linear-gradient(to bottom, black 65%, transparent 100%)";
+
   return (
-    <div className="absolute inset-0 overflow-hidden bg-gradient-to-br from-lilac-100 via-lilac-50 to-white">
+    <div
+      className="absolute inset-0 overflow-hidden bg-gradient-to-b from-lilac-100 via-lilac-50 to-white"
+      style={{ maskImage: fadeOutMask, WebkitMaskImage: fadeOutMask }}
+    >
       {/* Manchas decorativas — sempre visíveis, garantem um fundo bonito mesmo sem fotos */}
       <div className="absolute -left-24 -top-24 size-96 rounded-full bg-lilac-300/70 blur-2xl" />
       <div className="absolute -right-16 top-10 size-80 rounded-full bg-lilac-400/60 blur-2xl" />
-      <div className="absolute bottom-0 left-1/3 size-72 rounded-full bg-lilac-300/70 blur-2xl" />
+      <div className="absolute bottom-0 left-1/3 size-72 rounded-full bg-lilac-300/60 blur-2xl" />
 
       {/*
         As fotos ficam escondidas no mobile de propósito: numa tela estreita

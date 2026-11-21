@@ -110,33 +110,43 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 }
 
 export interface HomeShowcase {
-  featured: Product[];
+  homeProducts: Product[];
   promotional: Product[];
   heroImages: string[];
 }
 
 /**
  * Busca TODOS os produtos ativos uma única vez e deriva, a partir desse
- * mesmo resultado, os destaques, as promoções e as fotos do hero da home —
- * em vez de repetir a mesma consulta ao Supabase três vezes (como a home
- * fazia antes, com `getFeaturedProducts` + `getPromotionalProducts` +
- * `getHeroShowcaseImages` cada uma buscando o catálogo de novo).
+ * mesmo resultado, a vitrine de produtos da home, as promoções e as fotos
+ * do hero — em vez de repetir a mesma consulta ao Supabase várias vezes.
+ *
+ * `homeProducts` prioriza os marcados como destaque, mas sempre completa
+ * com os demais produtos ativos até o limite — assim a home sempre mostra
+ * produtos de verdade para quem entra, mesmo antes de a proprietária
+ * marcar algum como "destaque".
  */
 export async function getHomeShowcase(
-  limits: { featured?: number; promotional?: number; heroImages?: number } = {},
+  limits: {
+    homeProducts?: number;
+    promotional?: number;
+    heroImages?: number;
+  } = {},
 ): Promise<HomeShowcase> {
   const { items: allActive } = await getPublicProducts({ pageSize: 100 });
 
-  const featured = allActive
-    .filter((product) => product.featured)
-    .slice(0, limits.featured ?? 8);
+  const homeProductsLimit = limits.homeProducts ?? 8;
+  const featuredFirst = allActive.filter((product) => product.featured);
+  const homeProducts = [
+    ...featuredFirst,
+    ...allActive.filter((product) => !product.featured),
+  ].slice(0, homeProductsLimit);
 
   const promotional = allActive
     .filter((product) => computeProductPricing(product).isPromotionActive)
     .slice(0, limits.promotional ?? 8);
 
   const heroImages: string[] = [];
-  for (const product of [...featured, ...allActive]) {
+  for (const product of homeProducts) {
     const cover = product.images[0]?.image_url;
     if (cover && !heroImages.includes(cover)) {
       heroImages.push(cover);
@@ -144,7 +154,7 @@ export async function getHomeShowcase(
     if (heroImages.length >= (limits.heroImages ?? 6)) break;
   }
 
-  return { featured, promotional, heroImages };
+  return { homeProducts, promotional, heroImages };
 }
 
 /** Busca produtos por ID para revalidar preços no servidor (carrinho/WhatsApp). */

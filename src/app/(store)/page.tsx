@@ -30,18 +30,18 @@ const DIFERENCIAIS = [
 ];
 
 export default async function HomePage() {
-  const [settings, categories, { featured, promotional, heroImages }] =
+  const [settings, categories, { homeProducts, promotional, heroImages }] =
     await Promise.all([
       getPublicStoreSettings(),
       getActiveCategories(),
-      getHomeShowcase({ featured: 8, promotional: 8, heroImages: 6 }),
+      getHomeShowcase({ homeProducts: 8, promotional: 8, heroImages: 6 }),
     ]);
 
   return (
     <div>
       <section className="relative overflow-hidden">
         <HeroBackground images={heroImages} />
-        <div className="container-page relative flex justify-center py-12 sm:py-28">
+        <div className="container-page relative flex justify-center pb-24 pt-12 sm:py-28">
           <div className="flex max-w-2xl flex-col items-center gap-5 rounded-3xl bg-white/85 px-5 py-8 text-center shadow-xl shadow-ink-900/10 backdrop-blur-md sm:gap-6 sm:px-14 sm:py-14">
             <span className="rounded-full bg-lilac-100 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-lilac-700">
               Personalizados feitos com carinho
@@ -79,15 +79,23 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {settings.about_text && (
-        <section className="container-page py-16">
-          <div className="mx-auto max-w-2xl text-center">
+      {homeProducts.length > 0 && (
+        <section className="container-page py-10">
+          <div className="mb-6 flex items-end justify-between">
             <h2 className="font-display text-2xl font-semibold text-ink-900">
-              Sobre a {settings.store_name}
+              Produtos
             </h2>
-            <p className="mt-4 whitespace-pre-line text-ink-700">
-              {settings.about_text}
-            </p>
+            <Link
+              href="/produtos"
+              className="text-sm font-medium text-lilac-700 hover:underline"
+            >
+              Ver todos
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {homeProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
           </div>
         </section>
       )}
@@ -96,7 +104,7 @@ export default async function HomePage() {
         <section className="container-page py-10">
           <div className="mb-6 flex items-end justify-between">
             <h2 className="font-display text-2xl font-semibold text-ink-900">
-              Categorias
+              Catálogo
             </h2>
             <Link
               href="/categorias"
@@ -108,27 +116,6 @@ export default async function HomePage() {
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {categories.slice(0, 8).map((category) => (
               <CategoryCard key={category.id} category={category} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {featured.length > 0 && (
-        <section className="container-page py-10">
-          <div className="mb-6 flex items-end justify-between">
-            <h2 className="font-display text-2xl font-semibold text-ink-900">
-              Produtos em destaque
-            </h2>
-            <Link
-              href="/produtos?destaque=1"
-              className="text-sm font-medium text-lilac-700 hover:underline"
-            >
-              Ver todos
-            </Link>
-          </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {featured.map((product) => (
-              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </section>
