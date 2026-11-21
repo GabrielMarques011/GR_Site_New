@@ -71,6 +71,9 @@ export function ProductForm({
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [slugEdited, setSlugEdited] = useState(Boolean(product));
+  const [isPromotional, setIsPromotional] = useState(
+    Boolean(product?.promotional_price),
+  );
 
   const {
     register,
@@ -119,6 +122,17 @@ export function ProductForm({
     setValue("name", value);
     if (!slugEdited) {
       setValue("slug", slugify(value));
+    }
+  }
+
+  function handleTogglePromotional(checked: boolean) {
+    setIsPromotional(checked);
+    if (!checked) {
+      // Garante que nenhum valor digitado antes de desmarcar seja enviado —
+      // sem promoção ativa, o produto usa só o preço normal.
+      setValue("promotional_price", null);
+      setValue("promotion_start", "");
+      setValue("promotion_end", "");
     }
   }
 
@@ -199,7 +213,7 @@ export function ProductForm({
         </Field>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Field
           label="Preço (R$)"
           htmlFor="price"
@@ -212,20 +226,6 @@ export function ProductForm({
             step="0.01"
             min="0"
             {...register("price")}
-          />
-        </Field>
-
-        <Field
-          label="Preço promocional (R$)"
-          htmlFor="promotional_price"
-          error={errors.promotional_price?.message}
-        >
-          <Input
-            id="promotional_price"
-            type="number"
-            step="0.01"
-            min="0"
-            {...register("promotional_price")}
           />
         </Field>
 
@@ -244,32 +244,65 @@ export function ProductForm({
         </Field>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          label="Início da promoção"
-          htmlFor="promotion_start"
-          error={errors.promotion_start?.message}
-          hint="Deixe em branco para começar imediatamente"
-        >
-          <Input
-            id="promotion_start"
-            type="datetime-local"
-            {...register("promotion_start")}
+      <div className="rounded-xl border border-ink-100 p-4">
+        <label className="flex items-center gap-2 text-sm font-medium text-ink-900">
+          <input
+            type="checkbox"
+            className="size-4 rounded border-ink-300"
+            checked={isPromotional}
+            onChange={(event) => handleTogglePromotional(event.target.checked)}
           />
-        </Field>
+          Este produto está em promoção?
+        </label>
+        <p className="mt-1 text-xs text-ink-500">
+          Se não marcado, o produto usa só o preço normal, sem selo de promoção.
+        </p>
 
-        <Field
-          label="Término da promoção"
-          htmlFor="promotion_end"
-          error={errors.promotion_end?.message}
-          hint="Deixe em branco para não ter data de término"
-        >
-          <Input
-            id="promotion_end"
-            type="datetime-local"
-            {...register("promotion_end")}
-          />
-        </Field>
+        {isPromotional && (
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            <Field
+              label="Preço promocional (R$)"
+              htmlFor="promotional_price"
+              error={errors.promotional_price?.message}
+              required
+            >
+              <Input
+                id="promotional_price"
+                type="number"
+                step="0.01"
+                min="0"
+                required={isPromotional}
+                {...register("promotional_price")}
+              />
+            </Field>
+
+            <Field
+              label="Início da promoção"
+              htmlFor="promotion_start"
+              error={errors.promotion_start?.message}
+              hint="Deixe em branco para começar imediatamente"
+            >
+              <Input
+                id="promotion_start"
+                type="datetime-local"
+                {...register("promotion_start")}
+              />
+            </Field>
+
+            <Field
+              label="Término da promoção"
+              htmlFor="promotion_end"
+              error={errors.promotion_end?.message}
+              hint="Deixe em branco para não ter data de término"
+            >
+              <Input
+                id="promotion_end"
+                type="datetime-local"
+                {...register("promotion_end")}
+              />
+            </Field>
+          </div>
+        )}
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">

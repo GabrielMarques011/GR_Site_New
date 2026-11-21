@@ -51,4 +51,20 @@ describe("productFormSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("aceita preço promocional e estoque vazios (string) sem exigir valor", () => {
+    // Regressão: <input type="number"> vazio manda "" para o form, e
+    // z.coerce.number() transforma "" em 0, que falhava em .positive().
+    const result = productFormSchema.safeParse({
+      ...BASE_INPUT,
+      promotional_price: "",
+      stock_quantity: "",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.promotional_price).toBeNull();
+      expect(result.data.stock_quantity).toBeNull();
+    }
+  });
 });

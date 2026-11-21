@@ -1,5 +1,27 @@
 import { z } from "zod";
 
+/**
+ * Campos numéricos opcionais vêm de <input type="number"> como "" quando o
+ * usuário deixa em branco. `z.coerce.number()` transforma "" em 0, o que
+ * fazia um preço promocional vazio falhar em `.positive()` como se fosse
+ * obrigatório. Aqui "" (e null/undefined) viram `null` antes da validação,
+ * então o campo fica realmente opcional.
+ */
+function blankToNull(value: unknown) {
+  if (value === "" || value === null || value === undefined) return null;
+  return value;
+}
+
+const optionalPositiveNumber = z.preprocess(
+  blankToNull,
+  z.coerce.number().positive().nullable(),
+);
+
+const optionalNonNegativeInt = z.preprocess(
+  blankToNull,
+  z.coerce.number().int().min(0).nullable(),
+);
+
 export const productFormSchema = z
   .object({
     name: z.string().trim().min(2, "Informe o nome do produto").max(160),
@@ -14,11 +36,11 @@ export const productFormSchema = z
     description: z.string().trim().max(5000).optional().or(z.literal("")),
     category_id: z.string().uuid("Selecione uma categoria").nullable(),
     price: z.coerce.number().positive("O preço deve ser maior que zero"),
-    promotional_price: z.coerce.number().positive().nullable().optional(),
+    promotional_price: optionalPositiveNumber,
     promotion_start: z.string().nullable().optional(),
     promotion_end: z.string().nullable().optional(),
     sku: z.string().trim().max(60).optional().or(z.literal("")),
-    stock_quantity: z.coerce.number().int().min(0).nullable().optional(),
+    stock_quantity: optionalNonNegativeInt,
     featured: z.boolean().default(false),
     active: z.boolean().default(true),
     display_order: z.coerce.number().int().min(0).default(0),
