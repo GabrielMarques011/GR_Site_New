@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test
+      - run: npm run build
+        env:
+          # Chave de placeholder só para o build conseguir compilar no CI —
+          # nenhuma rota busca dados em tempo de build (ver ARCHITECTURE.md),
+          # então isso não exercita a conexão real com o Supabase.
+          NEXT_PUBLIC_SUPABASE_URL: https://jcloztrhwgtvxypybzav.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder-key

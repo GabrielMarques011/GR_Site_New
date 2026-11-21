@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+/playwright-report
+/test-results
+/blob-report
 
 # next.js
 /.next/
@@ -30,11 +33,18 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files (.env.example is intentionally committed as a template)
 .env*
+!.env.example
 
 # vercel
 .vercel
+
+# credentials / local notes (never commit real keys)
+*.pem
+*.key
+supabase/.temp
+.claude/settings.local.json
 
 # typescript
 *.tsbuildinfo

@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
 :root {
+  /* Lilás — identidade GR Design */
+  --color-lilac-50: #faf8fc;
+  --color-lilac-100: #f3edf9;
+  --color-lilac-200: #e6dbf2;
+  --color-lilac-300: #d3bfe8;
+  --color-lilac-400: #b896d9;
+  --color-lilac-500: #9b6fc7;
+  --color-lilac-600: #8359af;
+  --color-lilac-700: #6a4590;
+  --color-lilac-800: #503470;
+  --color-lilac-900: #392750;
+
+  /* Neutros com leve matiz roxo-acinzentado, para texto e fundos */
+  --color-ink-50: #f8f7fa;
+  --color-ink-100: #f0eef4;
+  --color-ink-300: #cdc5d6;
+  --color-ink-500: #887c96;
+  --color-ink-700: #564c63;
+  --color-ink-900: #2a2332;
+
+  --color-success-600: #3f8f5f;
+  --color-success-100: #e4f5ea;
+  --color-danger-600: #c1484f;
+  --color-danger-100: #fbe9ea;
+  --color-warning-600: #b4791f;
+  --color-warning-100: #faf0de;
+
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: var(--color-ink-900);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-sans: var(--next-font-sans);
+  --font-display: var(--next-font-display);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-lilac-50: var(--color-lilac-50);
+  --color-lilac-100: var(--color-lilac-100);
+  --color-lilac-200: var(--color-lilac-200);
+  --color-lilac-300: var(--color-lilac-300);
+  --color-lilac-400: var(--color-lilac-400);
+  --color-lilac-500: var(--color-lilac-500);
+  --color-lilac-600: var(--color-lilac-600);
+  --color-lilac-700: var(--color-lilac-700);
+  --color-lilac-800: var(--color-lilac-800);
+  --color-lilac-900: var(--color-lilac-900);
+
+  --color-ink-50: var(--color-ink-50);
+  --color-ink-100: var(--color-ink-100);
+  --color-ink-300: var(--color-ink-300);
+  --color-ink-500: var(--color-ink-500);
+  --color-ink-700: var(--color-ink-700);
+  --color-ink-900: var(--color-ink-900);
+
+  --color-success-600: var(--color-success-600);
+  --color-success-100: var(--color-success-100);
+  --color-danger-600: var(--color-danger-600);
+  --color-danger-100: var(--color-danger-100);
+  --color-warning-600: var(--color-warning-600);
+  --color-warning-100: var(--color-warning-100);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: var(--color-lilac-200);
+  color: var(--color-lilac-900);
+}
+
+.container-page {
+  @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+}
+
+.focus-ring {
+  @apply outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-lilac-500;
 }

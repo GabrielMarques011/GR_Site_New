@@ -1,0 +1,76 @@
+# Banco de dados (Supabase)
+
+> **Importante**: este ambiente de desenvolvimento não recebeu nenhuma
+> credencial com permissão de leitura do projeto Supabase remoto (nem a
+> chave anon/publicável, nem um access token de Management API). Tudo
+> abaixo foi escrito a partir da descrição de schema fornecida no briefing
+> do projeto — **não foi confirmado contra o banco real**. Antes de confiar
+> neste documento, confira o Table Editor / SQL Editor do Supabase.
+
+- Projeto: `jcloztrhwgtvxypybzav`
+- URL: `https://jcloztrhwgtvxypybzav.supabase.co`
+- Plano: Free
+
+## Tabelas existentes (não criadas por este projeto)
+
+| Tabela           | Observação                                                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `admin_profiles` | `user_id` (FK para `auth.users`), `name`, `role`, `created_at`                                                           |
+| `categories`     | `id`, `name`, `slug`, `description`, `image_url`, `display_order`, `active`, timestamps                                  |
+| `products`       | ver campos abaixo                                                                                                        |
+| `product_images` | `id`, `product_id`, `storage_path`, `image_url`, `alt_text`, `display_order`, `created_at`                               |
+| `store_settings` | `id`, `store_name`, `slogan`, `about_text`, `whatsapp`, `instagram_url`, `address`, `maps_url`, `logo_url`, `updated_at` |
+| `audit_logs`     | `id`, `user_id`, `action`, `entity`, `entity_id`, `details`, `created_at`                                                |
+
+Campos de `products`: `id`, `category_id`, `name`, `slug`, `description`,
+`price`, `promotional_price`, `promotion_start`, `promotion_end`, `sku`,
+`stock_quantity`, `featured`, `active`, `display_order`, `created_at`,
+`updated_at`.
+
+Funções existentes: `public.is_admin()`, `public.set_updated_at()` (+
+triggers de `updated_at`). RLS habilitado nas 6 tabelas, com políticas de
+leitura pública e políticas administrativas já criadas (estado inicial —
+ver auditoria em SECURITY.md).
+
+Bucket de Storage: `products-images` (público para leitura).
+
+## Mapeamento para o código
+
+- `src/types/database.ts` — tipos TypeScript escritos manualmente a partir
+  desta descrição (não gerados pelo `supabase gen types`, por falta de
+  credencial). **Assim que houver um access token disponível**, rode:
+
+  ```bash
+  npx supabase login
+  npx supabase gen types typescript --project-id jcloztrhwgtvxypybzav > src/types/database.ts
+  ```
+
+  e confira se o resultado bate com o que foi escrito manualmente (ajuste
+  `src/types/domain.ts` e os serviços em `src/services/*` se houver
+  divergência de nomes/tipos de coluna).
+
+- `src/services/*` — única camada que faz queries ao Supabase. Cada arquivo
+  corresponde a uma tabela/área: `products.ts`, `categories.ts`,
+  `product-images.ts`, `category-images.ts`, `settings.ts`, `audit.ts`,
+  `dashboard.ts`.
+
+## Migrations incrementais
+
+Pasta `supabase/migrations/`. Nenhuma migration deste projeto foi aplicada
+automaticamente no banco remoto — cada uma precisa ser revisada e
+executada manualmente (SQL Editor do Supabase ou `supabase db push`).
+
+- `0001_security_hardening.sql` — endurece as políticas de RLS das 6
+  tabelas e do bucket `products-images`, e fixa o `search_path` de
+  `public.is_admin()`. Não altera dados, não recria tabelas. Ver SECURITY.md
+  para a justificativa de cada policy.
+
+### Regra para novas migrations
+
+1. Nunca usar `DROP TABLE`, `TRUNCATE`, exclusão de usuários ou qualquer
+   comando destrutivo de dados.
+2. Preferir scripts idempotentes (`IF EXISTS` / `IF NOT EXISTS`, ou um
+   bloco `DO $$ ... $$` que remove e recria apenas o necessário).
+3. Nomear sequencialmente (`0002_...`, `0003_...`).
+4. Documentar o "porquê" no topo do arquivo.
+5. Pedir aprovação explícita antes de rodar no projeto remoto.
