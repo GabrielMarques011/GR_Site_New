@@ -38,14 +38,14 @@ checklist de cobertura.
 
 ## Infraestrutura e segurança
 
-| Requisito                                                                | Onde                                                                                             |
-| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| Reaproveitar Supabase existente (sem criar novo projeto)                 | `src/lib/supabase/*` aponta para `jcloztrhwgtvxypybzav`                                          |
-| Variáveis de ambiente sem segredo no frontend                            | `.env.example`, `src/lib/supabase/env.ts`                                                        |
-| `.gitignore` sem credenciais                                             | ver `.gitignore`                                                                                 |
-| Migrations incrementais, não destrutivas, com aprovação antes de aplicar | `supabase/migrations/0001_security_hardening.sql` e `0002_orders.sql` (propostas, não aplicadas) |
-| Auditoria das políticas de RLS                                           | `SECURITY.md`                                                                                    |
-| Preparo para Vercel + GitHub                                             | `DEPLOYMENT.md`                                                                                  |
+| Requisito                                                                | Onde                                                                                        |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Reaproveitar Supabase existente (sem criar novo projeto)                 | `src/lib/supabase/*` aponta para `jcloztrhwgtvxypybzav`                                     |
+| Variáveis de ambiente sem segredo no frontend                            | `.env.example`, `src/lib/supabase/env.ts`                                                   |
+| `.gitignore` sem credenciais                                             | ver `.gitignore`                                                                            |
+| Migrations incrementais, não destrutivas, com aprovação antes de aplicar | `supabase/migrations/0001_security_hardening.sql` (proposta) e `0002_orders.sql` (aplicada) |
+| Auditoria das políticas de RLS                                           | `SECURITY.md`                                                                               |
+| Preparo para Vercel + GitHub                                             | `DEPLOYMENT.md`                                                                             |
 
 ## Fora do escopo desta versão (explicitamente, por pedido do briefing)
 

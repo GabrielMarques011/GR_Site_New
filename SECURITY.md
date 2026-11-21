@@ -112,10 +112,8 @@ desenho de RLS é mais cuidadoso que o das outras tabelas:
 ## Checklist de segurança para produção (antes de divulgar o domínio)
 
 - [ ] Revisar e aplicar `0001_security_hardening.sql` no projeto Supabase.
-- [ ] Revisar e aplicar `0002_orders.sql` (necessário para o histórico de
-      pedidos e o desconto de primeira compra funcionarem de verdade — sem
-      ela, o checkout continua funcionando, mas sem gravar histórico, e
-      todo cliente é tratado como "primeira compra").
+- [x] `0002_orders.sql` aplicada no Supabase (histórico de pedidos e
+      desconto de primeira compra já funcionam de verdade).
 - [ ] Confirmar que `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` na Vercel é a
       chave anon/publicável (nunca `service_role`/`sb_secret_`).
 - [ ] Rodar `npm run build` e inspecionar o bundle client-side em busca de

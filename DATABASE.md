@@ -21,7 +21,7 @@
 | `product_images` | `id`, `product_id`, `storage_path`, `image_url`, `alt_text`, `display_order`, `created_at`                               |
 | `store_settings` | `id`, `store_name`, `slogan`, `about_text`, `whatsapp`, `instagram_url`, `address`, `maps_url`, `logo_url`, `updated_at` |
 | `audit_logs`     | `id`, `user_id`, `action`, `entity`, `entity_id`, `details`, `created_at`                                                |
-| `orders`         | **Criada pela migration `0002_orders.sql` (proposta, não aplicada)** — ver abaixo                                        |
+| `orders`         | Criada pela migration `0002_orders.sql` — **aplicada** no Supabase; ver detalhes abaixo                                  |
 
 Campos de `products`: `id`, `category_id`, `name`, `slug`, `description`,
 `price`, `promotional_price`, `promotion_start`, `promotion_end`, `sku`,
@@ -57,23 +57,24 @@ Bucket de Storage: `products-images` (público para leitura).
 
 ## Migrations incrementais
 
-Pasta `supabase/migrations/`. Nenhuma migration deste projeto foi aplicada
-automaticamente no banco remoto — cada uma precisa ser revisada e
-executada manualmente (SQL Editor do Supabase ou `supabase db push`).
+Pasta `supabase/migrations/`. Nenhuma migration deste projeto é aplicada
+automaticamente no banco remoto — cada uma é revisada e executada
+manualmente (SQL Editor do Supabase ou `supabase db push`); o status de
+cada uma abaixo reflete o que foi confirmado até agora.
 
 - `0001_security_hardening.sql` — endurece as políticas de RLS das 6
   tabelas e do bucket `products-images`, e fixa o `search_path` de
   `public.is_admin()`. Não altera dados, não recria tabelas. Ver SECURITY.md
-  para a justificativa de cada policy.
+  para a justificativa de cada policy. **Status: proposta, ainda não
+  confirmada como aplicada.**
 - `0002_orders.sql` — cria a tabela `orders` (histórico de pedidos
   enviados pelo WhatsApp: nome, telefone, itens, total, status) e a
   função `public.count_orders_by_phone()`, usada para o desconto de 5% na
-  primeira compra. **Enquanto essa migration não for aplicada**, o
-  checkout pelo WhatsApp continua funcionando normalmente (o código foi
-  escrito para degradar sem quebrar), mas: nenhum pedido fica registrado
-  no histórico, a página Histórico do painel mostra um aviso de erro, e
-  todo cliente é tratado como "primeira compra" (ganha os 5%, já que não
-  há como checar o histórico). Ver SECURITY.md para o desenho de RLS.
+  primeira compra. **Status: aplicada no Supabase.** Se alguma vez essa
+  tabela sumir ou for revertida, o checkout pelo WhatsApp continua
+  funcionando (o código foi escrito para degradar sem quebrar), mas sem
+  gravar histórico e tratando todo cliente como "primeira compra". Ver
+  SECURITY.md para o desenho de RLS.
 
 Campos de `orders`: `id`, `customer_name`, `customer_phone`, `items`
 (jsonb — lista de `{product_id, name, quantity, unit_price, subtotal}`),
