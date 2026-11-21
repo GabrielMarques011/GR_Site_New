@@ -41,8 +41,8 @@ export default async function HomePage() {
     <div>
       <section className="relative overflow-hidden">
         <HeroBackground images={heroImages} />
-        <div className="container-page relative flex justify-center py-20 sm:py-28">
-          <div className="flex max-w-2xl flex-col items-center gap-6 rounded-3xl bg-white/85 px-6 py-10 text-center shadow-xl shadow-ink-900/10 backdrop-blur-md sm:px-14 sm:py-14">
+        <div className="container-page relative flex justify-center py-12 sm:py-28">
+          <div className="flex max-w-2xl flex-col items-center gap-5 rounded-3xl bg-white/85 px-5 py-8 text-center shadow-xl shadow-ink-900/10 backdrop-blur-md sm:gap-6 sm:px-14 sm:py-14">
             <span className="rounded-full bg-lilac-100 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-lilac-700">
               Personalizados feitos com carinho
             </span>

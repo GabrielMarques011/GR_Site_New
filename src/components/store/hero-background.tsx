@@ -24,8 +24,15 @@ export function HeroBackground({ images }: { images: string[] }) {
       <div className="absolute -right-16 top-10 size-80 rounded-full bg-lilac-400/30 blur-3xl" />
       <div className="absolute bottom-0 left-1/3 size-72 rounded-full bg-lilac-200/50 blur-3xl" />
 
+      {/*
+        As fotos ficam escondidas no mobile de propósito: numa tela estreita
+        e mais alta que larga, o `object-cover` corta a imagem de um jeito
+        muito fechado (quase só textura, sem dar pra reconhecer o produto) —
+        fica melhor só com o gradiente/manchas decorativas. A partir do `sm`
+        já há largura suficiente para o recorte fazer sentido.
+      */}
       {photos.length > 0 && (
-        <>
+        <div className="hidden sm:block">
           <style>{`
             @keyframes hero-crossfade {
               0% { opacity: 0; }
@@ -54,7 +61,7 @@ export function HeroBackground({ images }: { images: string[] }) {
               />
             </div>
           ))}
-        </>
+        </div>
       )}
 
       {/* Véu claro por cima das fotos para o texto continuar legível */}
