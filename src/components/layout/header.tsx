@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Menu, ShoppingBag, X } from "lucide-react";
 
 import { useCart } from "@/features/cart/cart-context";
+import { StringLights } from "@/features/seasonal/christmas/string-lights";
 import { cn } from "@/lib/utils/cn";
 import type { PublicStoreSettings } from "@/types/domain";
 
@@ -16,7 +17,13 @@ const NAV_LINKS = [
   { href: "/contato", label: "Contato" },
 ];
 
-export function Header({ settings }: { settings: PublicStoreSettings }) {
+export function Header({
+  settings,
+  christmas = false,
+}: {
+  settings: PublicStoreSettings;
+  christmas?: boolean;
+}) {
   const { totalItems } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -29,9 +36,16 @@ export function Header({ settings }: { settings: PublicStoreSettings }) {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={settings.logo_url || "/brand/gr-monogram.svg"}
+            src={
+              settings.logo_url ||
+              (christmas
+                ? "/brand/gr-monogram-christmas.svg"
+                : "/brand/gr-monogram.svg")
+            }
             alt={settings.store_name}
-            className="h-9 w-auto"
+            className={
+              christmas && !settings.logo_url ? "h-[38px] w-auto" : "h-9 w-auto"
+            }
           />
           <span>{settings.store_name}</span>
         </Link>
@@ -96,6 +110,8 @@ export function Header({ settings }: { settings: PublicStoreSettings }) {
           </div>
         </div>
       </nav>
+
+      {christmas && <StringLights />}
     </header>
   );
 }

@@ -6,6 +6,9 @@ import { HeroBackground } from "@/components/store/hero-background";
 import { LocationCard } from "@/components/store/location-card";
 import { ProductCard } from "@/components/store/product-card";
 import { buttonVariants } from "@/components/ui/button";
+import { HeroChristmasDecorations } from "@/features/seasonal/christmas/hero-decorations";
+import { isChristmasSeason } from "@/features/seasonal/christmas/season";
+import { Snowfall } from "@/features/seasonal/christmas/snowfall";
 import { getActiveCategories } from "@/services/categories";
 import { getHomeShowcase } from "@/services/products";
 import { getPublicStoreSettings } from "@/services/settings";
@@ -37,14 +40,20 @@ export default async function HomePage() {
       getHomeShowcase({ homeProducts: 8, promotional: 8, heroImages: 6 }),
     ]);
 
+  const christmas = isChristmasSeason();
+
   return (
     <div>
       <section className="relative overflow-hidden">
         <HeroBackground images={heroImages} />
+        {christmas && <HeroChristmasDecorations />}
+        {christmas && <Snowfall />}
         <div className="container-page relative flex justify-center pb-24 pt-12 sm:py-28">
           <div className="flex max-w-2xl flex-col items-center gap-5 rounded-3xl bg-white/85 px-5 py-8 text-center shadow-xl shadow-ink-900/10 backdrop-blur-md sm:gap-6 sm:px-14 sm:py-14">
             <span className="rounded-full bg-lilac-100 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-lilac-700">
-              Personalizados feitos com carinho
+              {christmas
+                ? "Especial de Natal · feito com carinho"
+                : "Personalizados feitos com carinho"}
             </span>
             <h1 className="font-display text-4xl font-bold tracking-tight text-ink-900 sm:text-6xl">
               {settings.store_name}
@@ -126,7 +135,7 @@ export default async function HomePage() {
           <div className="container-page">
             <div className="mb-6 flex items-end justify-between">
               <h2 className="font-display text-2xl font-semibold text-ink-900">
-                Em promoção
+                {christmas ? "Ofertas de Natal" : "Em promoção"}
               </h2>
               <Link
                 href="/produtos?promocao=1"

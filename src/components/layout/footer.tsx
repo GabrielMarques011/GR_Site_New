@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { AtSign, MapPin, MessageCircle } from "lucide-react";
 
+import { FooterGarland } from "@/features/seasonal/christmas/footer-garland";
+import { isChristmasSeason } from "@/features/seasonal/christmas/season";
 import type { PublicStoreSettings } from "@/types/domain";
 
 export function Footer({ settings }: { settings: PublicStoreSettings }) {
@@ -9,7 +11,8 @@ export function Footer({ settings }: { settings: PublicStoreSettings }) {
     : null;
 
   return (
-    <footer className="mt-16 border-t border-ink-100 bg-lilac-50/60">
+    <footer className="relative mt-16 border-t border-ink-100 bg-lilac-50/60">
+      {isChristmasSeason() && <FooterGarland />}
       <div className="container-page grid gap-10 py-12 md:grid-cols-3">
         <div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
