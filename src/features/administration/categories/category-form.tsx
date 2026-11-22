@@ -1,10 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ImagePlus } from "lucide-react";
 import type { z } from "zod";
 
 import { Alert } from "@/components/ui/alert";
@@ -20,6 +19,7 @@ import {
 import type { Category } from "@/types/domain";
 
 import { CategoryImageUploader } from "./category-image-uploader";
+import { NewCategoryImagePicker } from "./new-category-image-picker";
 
 type CategoryFormInput = z.input<typeof categoryFormSchema>;
 
@@ -51,7 +51,6 @@ export function CategoryForm({
   const [pending, startTransition] = useTransition();
   const [slugEdited, setSlugEdited] = useState(Boolean(category));
   const [newImageFile, setNewImageFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const {
     register,
@@ -143,27 +142,7 @@ export function CategoryForm({
             currentImageUrl={category.image_url}
           />
         ) : (
-          <div>
-            <label className="focus-ring inline-flex cursor-pointer items-center gap-2 rounded-lg border border-ink-300 px-3 py-2 text-sm font-medium text-ink-700 hover:bg-ink-50">
-              <ImagePlus className="size-4" />
-              {newImageFile
-                ? newImageFile.name
-                : "Escolher imagem (do computador ou celular)"}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className="hidden"
-                onChange={(event) =>
-                  setNewImageFile(event.target.files?.[0] ?? null)
-                }
-              />
-            </label>
-            <p className="mt-1.5 text-xs text-ink-500">
-              Opcional — você também pode adicionar a imagem depois, editando a
-              categoria.
-            </p>
-          </div>
+          <NewCategoryImagePicker onChange={setNewImageFile} />
         )}
       </div>
 

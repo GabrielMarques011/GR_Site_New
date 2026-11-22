@@ -68,7 +68,7 @@ export function NewProductImagesPicker({
             <button
               type="button"
               onClick={() => removeAt(index)}
-              className="focus-ring absolute right-1 top-1 flex size-7 items-center justify-center rounded-full bg-ink-900/70 text-white opacity-0 transition-opacity group-hover:opacity-100"
+              className="focus-ring absolute right-1 top-1 flex size-7 items-center justify-center rounded-full bg-ink-900/70 text-white shadow-sm transition-colors hover:bg-danger-600"
               aria-label="Remover imagem"
             >
               <X className="size-3.5" />
