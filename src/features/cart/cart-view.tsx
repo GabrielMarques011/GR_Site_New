@@ -28,6 +28,7 @@ export function CartView({ whatsapp }: { whatsapp: string | null }) {
   const [checking, startTransition] = useTransition();
   const [showCheckoutForm, setShowCheckoutForm] = useState(false);
   const [placedOrder, setPlacedOrder] = useState(false);
+  const [lastWhatsappUrl, setLastWhatsappUrl] = useState<string | null>(null);
 
   function handleStartCheckout() {
     startTransition(async () => {
@@ -46,11 +47,9 @@ export function CartView({ whatsapp }: { whatsapp: string | null }) {
   }
 
   function handlePlaced(result: PlaceOrderState) {
-    if (result.whatsappUrl) {
-      window.open(result.whatsappUrl, "_blank", "noopener,noreferrer");
-    }
     setShowCheckoutForm(false);
     setPlacedOrder(true);
+    setLastWhatsappUrl(result.whatsappUrl ?? null);
     clear();
   }
 
@@ -62,6 +61,16 @@ export function CartView({ whatsapp }: { whatsapp: string | null }) {
           Pedido enviado! Continue a conversa no WhatsApp para confirmar
           disponibilidade e forma de pagamento.
         </p>
+        {lastWhatsappUrl && (
+          <a
+            href={lastWhatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ variant: "primary" })}
+          >
+            Abrir conversa no WhatsApp
+          </a>
+        )}
         <Link
           href="/produtos"
           className={buttonVariants({ variant: "outline" })}

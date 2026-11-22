@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PackageSearch } from "lucide-react";
 
+import { BackButton } from "@/components/store/back-button";
 import { Pagination } from "@/components/store/pagination";
 import { ProductCard } from "@/components/store/product-card";
 import { getCategoryBySlug } from "@/services/categories";
@@ -47,6 +48,8 @@ export default async function CategoryPage({
 
   return (
     <div className="container-page py-10">
+      <BackButton fallbackHref="/categorias" />
+
       <h1 className="font-display text-3xl font-semibold text-ink-900">
         {category.name}
       </h1>

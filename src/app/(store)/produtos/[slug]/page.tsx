@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ImageOff } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { BackButton } from "@/components/store/back-button";
 import { PriceDisplay } from "@/components/store/price-display";
 import { AddToCartButton } from "@/features/cart/add-to-cart-button";
 import { computeProductPricing } from "@/features/promotions/pricing";
@@ -43,6 +44,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   return (
     <div className="container-page py-10">
+      <BackButton fallbackHref="/produtos" />
+
       <nav className="mb-6 text-sm text-ink-500">
         <Link href="/produtos" className="hover:text-lilac-700">
           Produtos

@@ -45,6 +45,14 @@ export function CheckoutForm({
     setError(null);
     setFieldErrors({});
 
+    // Precisa abrir a aba em branco aqui, de forma síncrona e dentro do
+    // gesto de clique original — se esperarmos o resultado do servidor
+    // para só então chamar window.open, o navegador mobile (principalmente
+    // iOS Safari) bloqueia o popup por não considerar mais uma ação direta
+    // do usuário. O endereço final é definido depois, quando o pedido já
+    // foi confirmado.
+    const whatsappWindow = window.open("", "_blank");
+
     const formData = new FormData();
     formData.set("name", name);
     formData.set("phone", phone);
@@ -52,10 +60,22 @@ export function CheckoutForm({
     startTransition(async () => {
       const result = await placeOrderAction(items, { error: null }, formData);
       if (result.error) {
+        whatsappWindow?.close();
         setError(result.error);
         setFieldErrors(result.fieldErrors ?? {});
         return;
       }
+
+      if (result.whatsappUrl) {
+        if (whatsappWindow) {
+          whatsappWindow.location.href = result.whatsappUrl;
+        } else {
+          window.open(result.whatsappUrl, "_blank");
+        }
+      } else {
+        whatsappWindow?.close();
+      }
+
       onPlaced(result);
     });
   }

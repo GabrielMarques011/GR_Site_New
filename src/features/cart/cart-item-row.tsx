@@ -2,15 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { ImageOff, Minus, Plus, Trash2 } from "lucide-react";
 
+import { Textarea } from "@/components/ui/textarea";
 import { formatCurrency } from "@/lib/utils/currency";
 import type { CartItem } from "@/types/domain";
 
 import { useCart } from "./cart-context";
 
 export function CartItemRow({ item }: { item: CartItem }) {
-  const { updateQuantity, removeItem } = useCart();
+  const { updateQuantity, updateNote, removeItem } = useCart();
+  const [showNote, setShowNote] = useState(Boolean(item.note));
 
   return (
     <div className="flex items-center gap-4 border-b border-ink-100 py-4 last:border-b-0">
@@ -71,6 +74,28 @@ export function CartItemRow({ item }: { item: CartItem }) {
           >
             <Trash2 className="size-3.5" /> Remover
           </button>
+        </div>
+
+        <div className="mt-2">
+          {showNote ? (
+            <Textarea
+              value={item.note ?? ""}
+              onChange={(event) =>
+                updateNote(item.productId, event.target.value)
+              }
+              placeholder="Ex: Gostaria desta caneca com a arte do Stitch e fundo azul"
+              rows={2}
+              className="text-sm"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowNote(true)}
+              className="focus-ring text-sm font-medium text-lilac-700 hover:underline"
+            >
+              + Adicionar observação (opcional)
+            </button>
+          )}
         </div>
       </div>
 

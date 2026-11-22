@@ -20,6 +20,7 @@ interface CartContextValue {
   subtotal: number;
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
   updateQuantity: (productId: string, quantity: number) => void;
+  updateNote: (productId: string, note: string) => void;
   removeItem: (productId: string) => void;
   clear: () => void;
   replaceItems: (items: CartItem[]) => void;
@@ -95,6 +96,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const updateNote = useCallback<CartContextValue["updateNote"]>(
+    (productId, note) => {
+      const trimmed = note.trim();
+      setItems((current) =>
+        current.map((entry) =>
+          entry.productId === productId
+            ? { ...entry, note: trimmed === "" ? undefined : note }
+            : entry,
+        ),
+      );
+    },
+    [],
+  );
+
   const removeItem = useCallback<CartContextValue["removeItem"]>(
     (productId) => {
       setItems((current) =>
@@ -127,6 +142,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       subtotal,
       addItem,
       updateQuantity,
+      updateNote,
       removeItem,
       clear,
       replaceItems,
@@ -137,6 +153,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       subtotal,
       addItem,
       updateQuantity,
+      updateNote,
       removeItem,
       clear,
       replaceItems,

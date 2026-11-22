@@ -72,6 +72,7 @@ export async function revalidateCart(
       unitPrice: finalPrice,
       quantity,
       imageUrl: product.images[0]?.image_url ?? null,
+      note: clientItem.note,
     });
   }
 

@@ -93,6 +93,7 @@ export type OrderItemSnapshot = {
   quantity: number;
   unit_price: number;
   subtotal: number;
+  note?: string;
 };
 
 export type OrderRow = {

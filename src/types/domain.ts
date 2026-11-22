@@ -46,6 +46,7 @@ export interface CartItem {
   unitPrice: number;
   quantity: number;
   imageUrl: string | null;
+  note?: string;
 }
 
 export type ProductSortOption =

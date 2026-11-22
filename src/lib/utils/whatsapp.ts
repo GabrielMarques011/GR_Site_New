@@ -4,6 +4,7 @@ export interface WhatsAppOrderLine {
   name: string;
   quantity: number;
   unitPrice: number;
+  note?: string;
 }
 
 export interface WhatsAppOrderDetails {
@@ -38,7 +39,8 @@ export function buildOrderMessage({
       const lineSubtotal = line.unitPrice * line.quantity;
       return (
         `${index + 1}. ${line.name}\n` +
-        `   Qtd: ${line.quantity} x ${formatCurrency(line.unitPrice)} = ${formatCurrency(lineSubtotal)}`
+        `   Qtd: ${line.quantity} x ${formatCurrency(line.unitPrice)} = ${formatCurrency(lineSubtotal)}` +
+        (line.note ? `\n   Observação: ${line.note}` : "")
       );
     })
     .join("\n");

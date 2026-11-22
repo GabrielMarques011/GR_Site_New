@@ -37,7 +37,7 @@ export function AddToCartButton({
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-      <div className="flex items-center rounded-lg border border-ink-300">
+      <div className="flex w-fit items-center self-center rounded-lg border border-ink-300 sm:self-auto">
         <button
           type="button"
           onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -66,7 +66,7 @@ export function AddToCartButton({
         size="lg"
         onClick={handleAdd}
         disabled={disabled}
-        className="flex-1"
+        className="w-full sm:flex-1"
       >
         {added ? (
           <>
