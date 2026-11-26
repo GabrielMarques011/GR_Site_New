@@ -10,6 +10,7 @@ import {
   Package,
   ScrollText,
   Settings,
+  Sparkles,
 } from "lucide-react";
 
 import { logoutAction } from "@/features/auth/actions";
@@ -24,6 +25,11 @@ const NAV_ITEMS = [
   },
   { href: "/administracao/produtos", label: "Produtos", icon: Package },
   { href: "/administracao/categorias", label: "Categorias", icon: ListTree },
+  {
+    href: "/administracao/campanhas",
+    label: "Campanhas",
+    icon: Sparkles,
+  },
   { href: "/administracao/historico", label: "Histórico", icon: History },
   {
     href: "/administracao/configuracoes",

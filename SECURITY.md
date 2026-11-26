@@ -109,11 +109,29 @@ desenho de RLS é mais cuidadoso que o das outras tabelas:
 - **UPDATE/DELETE só para administradoras** (mudar o status do pedido,
   ou remover um pedido de teste/spam).
 
+## `seasonal_campaigns` — temas sazonais (migration `0003_seasonal_campaigns.sql`)
+
+Mesmo desenho de RLS de `categories`/`products` (dado não sensível,
+institucional):
+
+- **SELECT público só dos temas em vigor agora**: `active = true` **e**
+  dentro do prazo (`active_until` nulo ou ainda não vencido) — é o que a
+  home usa para montar a seção em destaque. Um tema desligado ou vencido
+  simplesmente não aparece para visitantes.
+- **Administradoras leem todos os temas** (ativos, inativos e vencidos),
+  para poder gerenciar tudo no painel.
+- **INSERT/UPDATE/DELETE só para administradoras.**
+- A coluna nova `products.campaign_id` usa `on delete set null`: excluir um
+  tema nunca apaga produtos, só desvincula (mesmo comportamento já usado em
+  `category_id`).
+
 ## Checklist de segurança para produção (antes de divulgar o domínio)
 
 - [ ] Revisar e aplicar `0001_security_hardening.sql` no projeto Supabase.
 - [x] `0002_orders.sql` aplicada no Supabase (histórico de pedidos e
       desconto de primeira compra já funcionam de verdade).
+- [ ] Revisar e aplicar `0003_seasonal_campaigns.sql` no projeto Supabase
+      (temas sazonais da home e do painel).
 - [ ] Confirmar que `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` na Vercel é a
       chave anon/publicável (nunca `service_role`/`sb_secret_`).
 - [ ] Rodar `npm run build` e inspecionar o bundle client-side em busca de

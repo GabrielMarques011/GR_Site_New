@@ -38,6 +38,7 @@ export default async function ProdutosPage({
     getPublicProducts({
       search: params.busca,
       categorySlug: params.categoria,
+      campaignSlug: params.campanha,
       sort,
       featuredOnly: params.destaque === "1",
       promotionsOnly: params.promocao === "1",

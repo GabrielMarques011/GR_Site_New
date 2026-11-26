@@ -5,6 +5,7 @@ import type {
   OrderStatus,
   ProductImageRow,
   ProductRow,
+  SeasonalCampaignRow,
   StoreSettingsRow,
 } from "./database";
 
@@ -14,6 +15,7 @@ export type Order = OrderRow;
 
 export type Category = CategoryRow;
 export type ProductImage = ProductImageRow;
+export type SeasonalCampaign = SeasonalCampaignRow;
 
 export interface Product extends ProductRow {
   category: Pick<CategoryRow, "id" | "name" | "slug"> | null;
@@ -55,6 +57,7 @@ export type ProductSortOption =
 export interface ProductFilters {
   search?: string;
   categorySlug?: string;
+  campaignSlug?: string;
   sort?: ProductSortOption;
   featuredOnly?: boolean;
   promotionsOnly?: boolean;

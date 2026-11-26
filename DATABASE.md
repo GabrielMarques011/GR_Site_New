@@ -22,8 +22,10 @@
 | `store_settings` | `id`, `store_name`, `slogan`, `about_text`, `whatsapp`, `instagram_url`, `address`, `maps_url`, `logo_url`, `updated_at` |
 | `audit_logs`     | `id`, `user_id`, `action`, `entity`, `entity_id`, `details`, `created_at`                                                |
 | `orders`         | Criada pela migration `0002_orders.sql` — **aplicada** no Supabase; ver detalhes abaixo                                  |
+| `seasonal_campaigns` | Criada pela migration `0003_seasonal_campaigns.sql` — **proposta, não aplicada**; ver detalhes abaixo                |
 
-Campos de `products`: `id`, `category_id`, `name`, `slug`, `description`,
+Campos de `products`: `id`, `category_id`, `campaign_id` (adicionado pela
+migration `0003_seasonal_campaigns.sql`), `name`, `slug`, `description`,
 `price`, `promotional_price`, `promotion_start`, `promotion_end`, `sku`,
 `stock_quantity`, `featured`, `active`, `display_order`, `created_at`,
 `updated_at`.
@@ -77,9 +79,26 @@ cada uma abaixo reflete o que foi confirmado até agora.
   SECURITY.md para o desenho de RLS.
 
 Campos de `orders`: `id`, `customer_name`, `customer_phone`, `items`
-(jsonb — lista de `{product_id, name, quantity, unit_price, subtotal}`),
+(jsonb — lista de `{product_id, name, quantity, unit_price, subtotal, note?}`),
 `subtotal`, `discount_percent`, `total`, `is_first_purchase`, `status`
 (`em_andamento` | `concluido` | `recusado`), `created_at`, `updated_at`.
+
+- `0003_seasonal_campaigns.sql` — cria a tabela `seasonal_campaigns` (os
+  temas sazonais ligáveis/desligáveis no painel: Natal, Dia das Mães, Volta
+  às aulas etc., cada um com `active` + `active_until`) e a coluna
+  `products.campaign_id`, usada para marcar quais produtos pertencem a cada
+  tema. Alimenta a seção em destaque da home e a tela "Campanhas" do
+  painel. **Status: proposta, ainda não confirmada como aplicada.** Se essa
+  migration ainda não tiver sido aplicada, o cadastro/edição de produtos e
+  toda a listagem de produtos continuam funcionando normalmente — só a
+  seção em destaque da home e o seletor de tema no formulário ficam vazios
+  (código escrito para degradar sem quebrar, ver `src/services/campaigns.ts`
+  e `src/services/products.ts`).
+
+Campos de `seasonal_campaigns`: `id`, `slug`, `name`, `active`,
+`active_until` (data; nulo = sem prazo), `is_default` (true para os 11
+temas fixos, que só podem ser desativados, nunca excluídos), `display_order`,
+`created_at`, `updated_at`.
 
 ### Regra para novas migrations
 

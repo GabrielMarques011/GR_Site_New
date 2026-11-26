@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { updateProductAction } from "@/features/administration/products/actions";
 import { ProductForm } from "@/features/administration/products/product-form";
+import { getAdminCampaigns } from "@/services/campaigns";
 import { getAdminCategories } from "@/services/categories";
 import { getAdminProductById } from "@/services/products";
 
@@ -16,9 +17,10 @@ export default async function EditProductPage({
   params,
 }: EditProductPageProps) {
   const { id } = await params;
-  const [product, categories] = await Promise.all([
+  const [product, categories, campaigns] = await Promise.all([
     getAdminProductById(id),
     getAdminCategories(),
+    getAdminCampaigns(),
   ]);
 
   if (!product) {
@@ -40,6 +42,7 @@ export default async function EditProductPage({
       <div className="mt-6 rounded-2xl border border-ink-100 bg-white p-6">
         <ProductForm
           categories={categories}
+          campaigns={campaigns}
           product={product}
           onSubmitAction={handleSubmit}
         />

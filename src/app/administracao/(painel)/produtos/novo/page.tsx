@@ -2,12 +2,16 @@ import type { Metadata } from "next";
 
 import { createProductAction } from "@/features/administration/products/actions";
 import { ProductForm } from "@/features/administration/products/product-form";
+import { getAdminCampaigns } from "@/services/campaigns";
 import { getAdminCategories } from "@/services/categories";
 
 export const metadata: Metadata = { title: "Novo produto" };
 
 export default async function NewProductPage() {
-  const categories = await getAdminCategories();
+  const [categories, campaigns] = await Promise.all([
+    getAdminCategories(),
+    getAdminCampaigns(),
+  ]);
 
   async function handleSubmit(formData: FormData) {
     "use server";
@@ -24,7 +28,11 @@ export default async function NewProductPage() {
       </p>
 
       <div className="mt-6 rounded-2xl border border-ink-100 bg-white p-6">
-        <ProductForm categories={categories} onSubmitAction={handleSubmit} />
+        <ProductForm
+          categories={categories}
+          campaigns={campaigns}
+          onSubmitAction={handleSubmit}
+        />
       </div>
     </div>
   );

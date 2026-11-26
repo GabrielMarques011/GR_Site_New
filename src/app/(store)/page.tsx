@@ -9,6 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { HeroChristmasDecorations } from "@/features/seasonal/christmas/hero-decorations";
 import { isChristmasSeason } from "@/features/seasonal/christmas/season";
 import { Snowfall } from "@/features/seasonal/christmas/snowfall";
+import { getActiveCampaignsShowcase } from "@/services/campaigns";
 import { getActiveCategories } from "@/services/categories";
 import { getHomeShowcase } from "@/services/products";
 import { getPublicStoreSettings } from "@/services/settings";
@@ -33,12 +34,17 @@ const DIFERENCIAIS = [
 ];
 
 export default async function HomePage() {
-  const [settings, categories, { homeProducts, promotional, heroImages }] =
-    await Promise.all([
-      getPublicStoreSettings(),
-      getActiveCategories(),
-      getHomeShowcase({ homeProducts: 8, promotional: 8, heroImages: 6 }),
-    ]);
+  const [
+    settings,
+    categories,
+    { homeProducts, promotional, heroImages },
+    campaignShowcases,
+  ] = await Promise.all([
+    getPublicStoreSettings(),
+    getActiveCategories(),
+    getHomeShowcase({ homeProducts: 8, promotional: 8, heroImages: 6 }),
+    getActiveCampaignsShowcase(),
+  ]);
 
   const christmas = isChristmasSeason();
 
@@ -87,6 +93,37 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {campaignShowcases.map(({ campaign, products }) => (
+        <section
+          key={campaign.id}
+          className="border-y border-lilac-200 bg-lilac-50/60 py-10"
+        >
+          <div className="container-page">
+            <div className="mb-6 flex items-end justify-between">
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wide text-lilac-700">
+                  Edição especial
+                </span>
+                <h2 className="font-display text-2xl font-semibold text-ink-900">
+                  {campaign.name}
+                </h2>
+              </div>
+              <Link
+                href={`/produtos?campanha=${campaign.slug}`}
+                className="text-sm font-medium text-lilac-700 hover:underline"
+              >
+                Ver todos
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </div>
+        </section>
+      ))}
 
       {homeProducts.length > 0 && (
         <section className="container-page py-10">

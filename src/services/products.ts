@@ -16,6 +16,7 @@ const PRODUCT_FIELDS = `
 
 const PRODUCT_SELECT = `${PRODUCT_FIELDS}, category:categories ( id, name, slug )`;
 const PRODUCT_SELECT_CATEGORY_INNER = `${PRODUCT_FIELDS}, category:categories!inner ( id, name, slug )`;
+const PRODUCT_SELECT_CAMPAIGN_INNER = `${PRODUCT_FIELDS}, campaign:seasonal_campaigns!inner ( id, slug, name )`;
 
 function sortImages(product: Product): Product {
   return {
@@ -32,13 +33,19 @@ export async function getPublicProducts(filters: ProductFilters = {}): Promise<{
 }> {
   const supabase = await createClient();
 
-  let query = filters.categorySlug
+  let query = filters.campaignSlug
     ? supabase
         .from("products")
-        .select(PRODUCT_SELECT_CATEGORY_INNER)
+        .select(PRODUCT_SELECT_CAMPAIGN_INNER)
         .eq("active", true)
-        .eq("category.slug", filters.categorySlug)
-    : supabase.from("products").select(PRODUCT_SELECT).eq("active", true);
+        .eq("campaign.slug", filters.campaignSlug)
+    : filters.categorySlug
+      ? supabase
+          .from("products")
+          .select(PRODUCT_SELECT_CATEGORY_INNER)
+          .eq("active", true)
+          .eq("category.slug", filters.categorySlug)
+      : supabase.from("products").select(PRODUCT_SELECT).eq("active", true);
 
   if (filters.search) {
     query = query.ilike("name", `%${filters.search}%`);
@@ -51,6 +58,15 @@ export async function getPublicProducts(filters: ProductFilters = {}): Promise<{
   const { data, error } = await query;
 
   if (error) {
+    if (filters.campaignSlug) {
+      // A tabela/coluna de campanhas pode ainda não existir (migration
+      // 0003 pendente) — trata como "nenhum produto nessa campanha" em vez
+      // de quebrar a página. Esse filtro só é alcançável por um link
+      // gerado a partir de uma campanha que já carregou com sucesso, mas
+      // alguém pode acessar a URL diretamente antes da migration rodar.
+      console.error("Falha ao filtrar produtos por campanha:", error.message);
+      return { items: [], total: 0 };
+    }
     throw new Error(`Falha ao carregar produtos: ${error.message}`);
   }
 
@@ -209,7 +225,31 @@ export async function getAdminProductById(id: string): Promise<Product | null> {
     throw new Error(`Falha ao carregar produto (admin): ${error.message}`);
   }
 
-  return data ? sortImages(data as unknown as Product) : null;
+  if (!data) return null;
+
+  const product = sortImages(data as unknown as Product);
+
+  // campaign_id não faz parte do PRODUCT_SELECT (evita que toda listagem de
+  // produtos dependa dessa coluna nova); buscado à parte, só para
+  // pré-preencher o seletor de tema na edição. Se a coluna ainda não
+  // existir (migration 0003 pendente), a edição do produto continua
+  // funcionando normalmente, só sem tema pré-selecionado.
+  const { data: campaignRow, error: campaignError } = await supabase
+    .from("products")
+    .select("campaign_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (campaignError) {
+    console.error(
+      "Falha ao carregar a campanha do produto:",
+      campaignError.message,
+    );
+  }
+
+  product.campaign_id = campaignRow?.campaign_id ?? null;
+
+  return product;
 }
 
 function toProductPayload(values: ProductFormValues) {
@@ -218,6 +258,7 @@ function toProductPayload(values: ProductFormValues) {
     slug: values.slug,
     description: values.description || null,
     category_id: values.category_id,
+    campaign_id: values.campaign_id ?? null,
     price: values.price,
     promotional_price: values.promotional_price ?? null,
     promotion_start: values.promotion_start || null,
@@ -234,18 +275,38 @@ export async function createProduct(
   values: ProductFormValues,
 ): Promise<string> {
   const supabase = await createClient();
+  const payload = toProductPayload(values);
 
-  const { data, error } = await supabase
+  const result = await supabase
     .from("products")
-    .insert(toProductPayload(values))
+    .insert(payload)
     .select("id")
     .single();
 
-  if (error) {
-    throw new Error(`Falha ao criar produto: ${error.message}`);
+  if (result.error) {
+    // Pode ser a coluna campaign_id ainda não existir (migration 0003
+    // pendente) — tenta de novo sem ela antes de desistir, para a criação
+    // de produto nunca quebrar por causa de um campo novo e opcional.
+    const { campaign_id, ...fallbackPayload } = payload;
+    void campaign_id;
+    const retry = await supabase
+      .from("products")
+      .insert(fallbackPayload)
+      .select("id")
+      .single();
+
+    if (retry.error) {
+      throw new Error(`Falha ao criar produto: ${result.error.message}`);
+    }
+
+    console.error(
+      "Produto criado sem campanha sazonal (coluna pendente de migration):",
+      result.error.message,
+    );
+    return retry.data.id;
   }
 
-  return data.id;
+  return result.data.id;
 }
 
 export async function updateProduct(
@@ -253,14 +314,29 @@ export async function updateProduct(
   values: ProductFormValues,
 ): Promise<void> {
   const supabase = await createClient();
+  const payload = toProductPayload(values);
 
-  const { error } = await supabase
-    .from("products")
-    .update(toProductPayload(values))
-    .eq("id", id);
+  const result = await supabase.from("products").update(payload).eq("id", id);
 
-  if (error) {
-    throw new Error(`Falha ao atualizar produto: ${error.message}`);
+  if (result.error) {
+    // Mesma degradação do createProduct: se a coluna campaign_id ainda não
+    // existir, tenta salvar o resto das alterações sem ela.
+    const { campaign_id, ...fallbackPayload } = payload;
+    void campaign_id;
+    const retry = await supabase
+      .from("products")
+      .update(fallbackPayload)
+      .eq("id", id);
+
+    if (retry.error) {
+      throw new Error(`Falha ao atualizar produto: ${result.error.message}`);
+    }
+
+    console.error(
+      "Produto atualizado sem campanha sazonal (coluna pendente de migration):",
+      result.error.message,
+    );
+    return;
   }
 }
 

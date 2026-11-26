@@ -17,7 +17,7 @@ import {
   type ProductFormValues,
 } from "@/lib/validations/product";
 import { slugify } from "@/lib/utils/slugify";
-import type { Category } from "@/types/domain";
+import type { Category, SeasonalCampaign } from "@/types/domain";
 import type { Product } from "@/types/domain";
 
 import { NewProductImagesPicker } from "./new-product-images-picker";
@@ -39,6 +39,7 @@ function buildFormData(values: ProductFormValues, newImages: File[]): FormData {
   formData.set("slug", values.slug);
   formData.set("description", values.description ?? "");
   formData.set("category_id", values.category_id ?? "");
+  formData.set("campaign_id", values.campaign_id ?? "");
   formData.set("price", String(values.price));
   formData.set(
     "promotional_price",
@@ -60,10 +61,12 @@ function buildFormData(values: ProductFormValues, newImages: File[]): FormData {
 
 export function ProductForm({
   categories,
+  campaigns,
   product,
   onSubmitAction,
 }: {
   categories: Category[];
+  campaigns: SeasonalCampaign[];
   product?: Product;
   onSubmitAction: (
     formData: FormData,
@@ -92,6 +95,7 @@ export function ProductForm({
           slug: product.slug,
           description: product.description ?? "",
           category_id: product.category_id,
+          campaign_id: product.campaign_id ?? null,
           price: product.price,
           promotional_price: product.promotional_price,
           promotion_start: toDatetimeLocal(product.promotion_start),
@@ -107,6 +111,7 @@ export function ProductForm({
           slug: "",
           description: "",
           category_id: null,
+          campaign_id: null,
           price: 0,
           promotional_price: null,
           promotion_start: "",
@@ -215,6 +220,26 @@ export function ProductForm({
           <Input id="sku" {...register("sku")} />
         </Field>
       </div>
+
+      <Field
+        label="Campanha sazonal (opcional)"
+        htmlFor="campaign_id"
+        error={errors.campaign_id?.message}
+        hint="Produtos marcados aparecem na seção em destaque da home enquanto o tema estiver ativo"
+      >
+        <Select
+          id="campaign_id"
+          {...register("campaign_id")}
+          value={watch("campaign_id") ?? ""}
+        >
+          <option value="">Sem campanha</option>
+          {campaigns.map((campaign) => (
+            <option key={campaign.id} value={campaign.id}>
+              {campaign.name}
+            </option>
+          ))}
+        </Select>
+      </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field

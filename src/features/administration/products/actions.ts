@@ -27,6 +27,7 @@ function parseProductForm(formData: FormData) {
     slug: formData.get("slug"),
     description: formData.get("description"),
     category_id: formData.get("category_id") || null,
+    campaign_id: formData.get("campaign_id") || null,
     price: formData.get("price"),
     promotional_price: formData.get("promotional_price") || null,
     promotion_start: formData.get("promotion_start") || null,

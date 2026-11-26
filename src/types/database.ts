@@ -33,9 +33,22 @@ export type CategoryRow = {
   updated_at: string;
 };
 
+export type SeasonalCampaignRow = {
+  id: string;
+  slug: string;
+  name: string;
+  active: boolean;
+  active_until: string | null;
+  is_default: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ProductRow = {
   id: string;
   category_id: string | null;
+  campaign_id: string | null;
   name: string;
   slug: string;
   description: string | null;
@@ -167,6 +180,12 @@ export type Database = {
           total: number;
         };
         Update: Partial<OrderRow>;
+        Relationships: [];
+      };
+      seasonal_campaigns: {
+        Row: SeasonalCampaignRow;
+        Insert: Partial<SeasonalCampaignRow> & { slug: string; name: string };
+        Update: Partial<SeasonalCampaignRow>;
         Relationships: [];
       };
     };
