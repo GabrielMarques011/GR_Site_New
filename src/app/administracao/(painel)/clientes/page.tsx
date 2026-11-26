@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Cake, Gift, PartyPopper, UserPlus, Users } from "lucide-react";
 
 import { Pagination } from "@/components/store/pagination";
+import { buttonVariants } from "@/components/ui/button";
 import { CustomersTable } from "@/features/administration/customers/customers-table";
 import { CustomersToolbar } from "@/features/administration/customers/customers-toolbar";
 import { getAdminCustomers, getCustomerIndicators } from "@/services/customers";
@@ -84,12 +85,20 @@ export default async function AdminClientesPage({
             {indicators.totalCustomers} cliente(s) cadastrado(s)
           </p>
         </div>
-        <Link
-          href="/administracao/clientes/modelos"
-          className="text-sm font-medium text-lilac-700 hover:underline"
-        >
-          Modelos de mensagem
-        </Link>
+        <div className="flex flex-wrap items-center gap-4">
+          <Link
+            href="/administracao/clientes/modelos"
+            className="text-sm font-medium text-lilac-700 hover:underline"
+          >
+            Modelos de mensagem
+          </Link>
+          <Link
+            href="/administracao/clientes/novo"
+            className={buttonVariants()}
+          >
+            <UserPlus className="size-4" /> Novo cliente
+          </Link>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">

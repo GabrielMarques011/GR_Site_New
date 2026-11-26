@@ -18,6 +18,7 @@ export type AuditAction =
   | "campaign.activate"
   | "campaign.deactivate"
   | "campaign.delete"
+  | "customer.create_by_admin"
   | "customer.update"
   | "customer.delete"
   | "customer.benefit_confirm"

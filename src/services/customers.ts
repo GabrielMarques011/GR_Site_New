@@ -80,6 +80,68 @@ export async function registerCustomer(
   return { customerId: row.customer_id, fullName: row.full_name };
 }
 
+export interface AdminCreateCustomerInput {
+  fullName: string;
+  phone: string;
+  phoneNormalized: string;
+  birthDate: string;
+  zipCode: string;
+  street: string;
+  number: string;
+  complement: string | null;
+  neighborhood: string;
+  city: string;
+  state: string;
+  whatsappOptIn: boolean;
+  consentVersion: string | null;
+  recoveryCodeHash: string;
+}
+
+/**
+ * Cadastro feito pela administradora pelo painel (cliente atendida
+ * pessoalmente, que ainda não tem conta). Não cria sessão de dispositivo
+ * — quem está cadastrando não é a própria cliente.
+ */
+export async function createCustomerByAdmin(
+  input: AdminCreateCustomerInput,
+): Promise<{ customerId: string; fullName: string }> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.rpc("admin_create_customer", {
+    p_full_name: input.fullName,
+    p_phone: input.phone,
+    p_phone_normalized: input.phoneNormalized,
+    p_birth_date: input.birthDate,
+    p_zip_code: input.zipCode,
+    p_street: input.street,
+    p_number: input.number,
+    p_complement: input.complement,
+    p_neighborhood: input.neighborhood,
+    p_city: input.city,
+    p_state: input.state,
+    p_whatsapp_opt_in: input.whatsappOptIn,
+    p_consent_version: input.consentVersion,
+    p_recovery_code_hash: input.recoveryCodeHash,
+  });
+
+  if (error) {
+    if (
+      error.code === "23505" ||
+      /já existe um cadastro/i.test(error.message)
+    ) {
+      throw new Error("Já existe um cadastro com este telefone.");
+    }
+    throw new Error(`Falha ao cadastrar cliente: ${error.message}`);
+  }
+
+  const row = data?.[0];
+  if (!row) {
+    throw new Error("Falha ao cadastrar cliente.");
+  }
+
+  return { customerId: row.customer_id, fullName: row.full_name };
+}
+
 export interface RecognizedCustomer {
   customerId: string;
   fullName: string;

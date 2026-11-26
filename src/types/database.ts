@@ -341,6 +341,25 @@ export type Database = {
         };
         Returns: { customer_id: string; full_name: string }[];
       };
+      admin_create_customer: {
+        Args: {
+          p_full_name: string;
+          p_phone: string;
+          p_phone_normalized: string;
+          p_birth_date: string;
+          p_zip_code: string;
+          p_street: string;
+          p_number: string;
+          p_complement: string | null;
+          p_neighborhood: string;
+          p_city: string;
+          p_state: string;
+          p_whatsapp_opt_in: boolean;
+          p_consent_version: string | null;
+          p_recovery_code_hash: string;
+        };
+        Returns: { customer_id: string; full_name: string }[];
+      };
       get_customer_session: {
         Args: { p_token_hash: string };
         Returns: {

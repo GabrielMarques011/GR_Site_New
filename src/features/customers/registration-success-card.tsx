@@ -1,36 +1,20 @@
-"use client";
+import { PartyPopper } from "lucide-react";
 
-import { useState } from "react";
-import { Check, Copy, PartyPopper } from "lucide-react";
-
-import { Button } from "@/components/ui/button";
+import { RecoveryCodeBox } from "./recovery-code-box";
 
 /**
- * Tela de sucesso do cadastro + código de recuperação. É Client Component
- * (precisa do botão de copiar), mas é renderizada tanto pelo formulário
- * (estado local, aparece na hora) quanto pela própria página `/cadastro`
- * (a partir do cookie de flash) — o cadastro grava um cookie de sessão, e
- * o Next.js atualiza a rota atual sozinho sempre que uma Server Action
- * grava um cookie, o que apagaria o estado local do formulário cedo
- * demais para a pessoa copiar o código.
+ * Tela de sucesso do cadastro + código de recuperação. É renderizada tanto
+ * pelo formulário (estado local, aparece na hora) quanto pela própria
+ * página `/cadastro` (a partir do cookie de flash) — o cadastro grava um
+ * cookie de sessão, e o Next.js atualiza a rota atual sozinho sempre que
+ * uma Server Action grava um cookie, o que apagaria o estado local do
+ * formulário cedo demais para a pessoa copiar o código.
  */
 export function RegistrationSuccessCard({
   recoveryCode,
 }: {
   recoveryCode: string;
 }) {
-  const [copied, setCopied] = useState(false);
-
-  function handleCopyCode() {
-    navigator.clipboard
-      .writeText(recoveryCode)
-      .then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      })
-      .catch(() => {});
-  }
-
   return (
     <div className="flex flex-col gap-5 rounded-2xl border border-lilac-200 bg-lilac-50/60 p-6 text-center">
       <PartyPopper className="mx-auto size-10 text-lilac-600" />
@@ -53,23 +37,8 @@ export function RegistrationSuccessCard({
           Use este código junto com seu WhatsApp para recuperar seu cadastro em
           outro celular ou computador.
         </p>
-        <div className="mt-3 flex items-center justify-center gap-2">
-          <code className="rounded-lg bg-lilac-50 px-4 py-2 font-mono text-lg tracking-wide text-lilac-800">
-            {recoveryCode}
-          </code>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleCopyCode}
-          >
-            {copied ? (
-              <Check className="size-4" />
-            ) : (
-              <Copy className="size-4" />
-            )}
-            {copied ? "Copiado" : "Copiar"}
-          </Button>
+        <div className="mt-3">
+          <RecoveryCodeBox recoveryCode={recoveryCode} />
         </div>
       </div>
     </div>

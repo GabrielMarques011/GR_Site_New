@@ -3,15 +3,24 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
+import { generateRecoveryCode, hashRecoveryCode } from "@/lib/customer-session";
 import { normalizePhoneE164 } from "@/lib/utils/phone";
-import { customerAdminUpdateSchema } from "@/lib/validations/customer";
+import {
+  CONSENT_VERSION,
+  customerAdminUpdateSchema,
+  customerRegistrationSchema,
+} from "@/lib/validations/customer";
 import { logAuditEvent } from "@/services/audit";
 import {
   cancelBenefitReservation,
   confirmBenefitUsage,
   revokeBenefit,
 } from "@/services/customer-benefits";
-import { deleteCustomer, updateCustomer } from "@/services/customers";
+import {
+  createCustomerByAdmin,
+  deleteCustomer,
+  updateCustomer,
+} from "@/services/customers";
 import { updateWhatsAppTemplate } from "@/services/whatsapp-templates";
 import {
   cancelPreparedMessage,
@@ -31,6 +40,99 @@ export interface CustomerFormState {
 function revalidateCustomerPaths(id?: string) {
   revalidatePath("/administracao/clientes");
   if (id) revalidatePath(`/administracao/clientes/${id}`);
+}
+
+export interface CreateCustomerState {
+  error: string | null;
+  fieldErrors?: Record<string, string>;
+  success?: { customerId: string; fullName: string; recoveryCode: string };
+}
+
+export async function createCustomerAction(
+  _prevState: CreateCustomerState,
+  formData: FormData,
+): Promise<CreateCustomerState> {
+  const parsed = customerRegistrationSchema.safeParse({
+    full_name: formData.get("full_name"),
+    phone: formData.get("phone"),
+    birth_date: formData.get("birth_date"),
+    zip_code: formData.get("zip_code"),
+    street: formData.get("street"),
+    number: formData.get("number"),
+    complement: formData.get("complement"),
+    neighborhood: formData.get("neighborhood"),
+    city: formData.get("city"),
+    state: formData.get("state"),
+    whatsapp_marketing_opt_in:
+      formData.get("whatsapp_marketing_opt_in") === "on",
+  });
+
+  if (!parsed.success) {
+    return {
+      error: "Revise os campos destacados.",
+      fieldErrors: Object.fromEntries(
+        parsed.error.issues.map((issue) => [
+          issue.path.join("."),
+          issue.message,
+        ]),
+      ),
+    };
+  }
+
+  const phoneNormalized = normalizePhoneE164(parsed.data.phone);
+  if (!phoneNormalized) {
+    return {
+      error: "Revise os campos destacados.",
+      fieldErrors: { phone: "Informe um WhatsApp válido, com DDD" },
+    };
+  }
+
+  const recoveryCode = generateRecoveryCode();
+
+  try {
+    const result = await createCustomerByAdmin({
+      fullName: parsed.data.full_name,
+      phone: parsed.data.phone,
+      phoneNormalized,
+      birthDate: parsed.data.birth_date,
+      zipCode: parsed.data.zip_code,
+      street: parsed.data.street,
+      number: parsed.data.number,
+      complement: parsed.data.complement || null,
+      neighborhood: parsed.data.neighborhood,
+      city: parsed.data.city,
+      state: parsed.data.state,
+      whatsappOptIn: parsed.data.whatsapp_marketing_opt_in,
+      consentVersion: parsed.data.whatsapp_marketing_opt_in
+        ? CONSENT_VERSION
+        : null,
+      recoveryCodeHash: hashRecoveryCode(recoveryCode),
+    });
+
+    await logAuditEvent(
+      "customer.create_by_admin",
+      "customers",
+      result.customerId,
+      {
+        name: result.fullName,
+      },
+    );
+    revalidateCustomerPaths();
+
+    return {
+      error: null,
+      success: {
+        customerId: result.customerId,
+        fullName: result.fullName,
+        recoveryCode,
+      },
+    };
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error ? error.message : "Falha ao cadastrar cliente.",
+    };
+  }
 }
 
 function parseCustomerForm(formData: FormData) {
