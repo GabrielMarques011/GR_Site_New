@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, ShoppingBag, X } from "lucide-react";
+import { Menu, ShoppingBag, User, X } from "lucide-react";
 
 import { useCart } from "@/features/cart/cart-context";
 import { StringLights } from "@/features/seasonal/christmas/string-lights";
@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { href: "/categorias", label: "Categorias" },
   { href: "/sobre", label: "Sobre nós" },
   { href: "/contato", label: "Contato" },
+  { href: "/cadastro", label: "Minha conta" },
 ];
 
 export function Header({
@@ -63,6 +64,14 @@ export function Header({
         </nav>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/cadastro"
+            className="focus-ring hidden size-10 items-center justify-center rounded-full text-ink-700 hover:bg-lilac-50 hover:text-lilac-700 sm:flex"
+            aria-label="Minha conta"
+          >
+            <User className="size-5" />
+          </Link>
+
           <Link
             href="/carrinho"
             className="focus-ring relative flex size-10 items-center justify-center rounded-full text-ink-700 hover:bg-lilac-50 hover:text-lilac-700"

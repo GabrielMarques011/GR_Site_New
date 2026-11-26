@@ -2,7 +2,13 @@
 
 import { checkoutCustomerSchema } from "@/lib/validations/order";
 import { buildWhatsAppOrderUrl } from "@/lib/utils/whatsapp";
-import { countOrdersByPhone, createOrder } from "@/services/orders";
+import { reserveFirstPurchaseBenefit } from "@/services/customer-benefits";
+import { getRecognizedCustomer } from "@/features/customers/recognize";
+import {
+  countOrdersByPhone,
+  createOrder,
+  updateOrderDiscount,
+} from "@/services/orders";
 import { getPublicStoreSettings } from "@/services/settings";
 import type { CartItem } from "@/types/domain";
 
@@ -72,20 +78,31 @@ export async function placeOrderAction(
     };
   }
 
-  const previousOrders = await countOrdersByPhone(parsed.data.phone);
-  const isFirstPurchase = previousOrders === 0;
-  const discountPercent = isFirstPurchase ? FIRST_PURCHASE_DISCOUNT_PERCENT : 0;
+  // Cliente reconhecido (cookie de sessão válido) tem o desconto de
+  // primeira compra decidido pelo próprio cadastro (reserva transacional) —
+  // nunca pelo histórico por telefone. Quem não está reconhecido mantém
+  // exatamente o comportamento já existente (heurística por telefone).
+  const recognizedCustomer = await getRecognizedCustomer();
+
+  let isFirstPurchase = false;
+  if (!recognizedCustomer) {
+    const previousOrders = await countOrdersByPhone(parsed.data.phone);
+    isFirstPurchase = previousOrders === 0;
+  }
+  let discountPercent = isFirstPurchase ? FIRST_PURCHASE_DISCOUNT_PERCENT : 0;
 
   const subtotal = items.reduce(
     (sum, item) => sum + item.unitPrice * item.quantity,
     0,
   );
-  const total = subtotal * (1 - discountPercent / 100);
+  let total = subtotal * (1 - discountPercent / 100);
 
+  let orderId: string | null = null;
   try {
-    await createOrder({
+    orderId = await createOrder({
       customerName: parsed.data.name,
       customerPhone: parsed.data.phone,
+      customerId: recognizedCustomer?.customerId ?? null,
       items: items.map((item) => ({
         product_id: item.productId,
         name: item.name,
@@ -104,6 +121,24 @@ export async function placeOrderAction(
     // WhatsApp — se a tabela ainda não existir (migration pendente) ou
     // falhar por qualquer motivo, só registramos no log do servidor.
     console.error("Falha ao registrar pedido no histórico:", error);
+  }
+
+  // Só depois que o pedido já existe (a reserva referencia o pedido) —
+  // reserva o benefício do cliente reconhecido e corrige o desconto
+  // gravado, se a reserva realmente aconteceu (nunca confia em "já
+  // reconhecido" sozinho: outra aba/dispositivo pode ter reservado
+  // primeiro).
+  if (recognizedCustomer && orderId) {
+    const reservedPercent = await reserveFirstPurchaseBenefit(
+      recognizedCustomer.customerId,
+      orderId,
+    );
+    if (reservedPercent != null && reservedPercent > 0) {
+      isFirstPurchase = true;
+      discountPercent = reservedPercent;
+      total = subtotal * (1 - discountPercent / 100);
+      await updateOrderDiscount(orderId, discountPercent, total, true);
+    }
   }
 
   const whatsappUrl = buildWhatsAppOrderUrl(settings.whatsapp, {

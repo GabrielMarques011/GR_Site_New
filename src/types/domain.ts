@@ -1,5 +1,9 @@
 import type {
   CategoryRow,
+  CustomerBenefitRow,
+  CustomerBenefitStatus,
+  CustomerRow,
+  CustomerWithBirthdayRow,
   OrderItemSnapshot,
   OrderRow,
   OrderStatus,
@@ -7,15 +11,33 @@ import type {
   ProductRow,
   SeasonalCampaignRow,
   StoreSettingsRow,
+  WhatsAppMessageLogRow,
+  WhatsAppMessageLogStatus,
+  WhatsAppMessageTemplateRow,
+  WhatsAppMessageTemplateType,
+  WhatsAppMessageType,
 } from "./database";
 
-export type { StoreSettingsRow, OrderItemSnapshot, OrderStatus };
+export type {
+  StoreSettingsRow,
+  OrderItemSnapshot,
+  OrderStatus,
+  CustomerBenefitStatus,
+  WhatsAppMessageType,
+  WhatsAppMessageTemplateType,
+  WhatsAppMessageLogStatus,
+};
 
 export type Order = OrderRow;
 
 export type Category = CategoryRow;
 export type ProductImage = ProductImageRow;
 export type SeasonalCampaign = SeasonalCampaignRow;
+export type Customer = CustomerRow;
+export type CustomerWithBirthday = CustomerWithBirthdayRow;
+export type CustomerBenefit = CustomerBenefitRow;
+export type WhatsAppMessageTemplate = WhatsAppMessageTemplateRow;
+export type WhatsAppMessageLog = WhatsAppMessageLogRow;
 
 export interface Product extends ProductRow {
   category: Pick<CategoryRow, "id" | "name" | "slug"> | null;

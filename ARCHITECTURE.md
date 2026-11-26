@@ -85,6 +85,31 @@ Upload de imagens (produtos e categorias) acontece via Server Action, que:
 Exclusão de produto/imagem remove o arquivo do Storage antes de apagar a
 linha do banco, para não deixar arquivos órfãos.
 
+## Cadastro e reconhecimento de clientes
+
+Sistema próprio, independente do Supabase Auth usado pelas administradoras
+— o cliente nunca cria usuário/senha. `src/lib/customer-session.ts` gera o
+token de sessão (256 bits) e o código de recuperação, e lê/grava o cookie
+`HttpOnly` (`gr_customer_session`); `src/features/customers/recognize.ts`
+(`getRecognizedCustomer()`) é chamado a partir de Server Components (layout
+da loja, carrinho) para resolver o cookie em um cliente reconhecido, sempre
+devolvendo `null` em vez de lançar quando não há sessão válida. Toda a
+escrita/leitura pública real acontece em `src/services/customers.ts`, via
+funções Postgres `SECURITY DEFINER` (nunca acesso direto às tabelas
+`customers`/`customer_sessions`/`customer_recovery_codes` — ver
+SECURITY.md). O benefício de primeira compra (`customer_benefits`) é
+reservado atomicamente no checkout (`features/cart/checkout-actions.ts`) e
+só confirmado manualmente pela administradora no painel
+(`administracao/clientes/[id]`). As mensagens pelo WhatsApp (boas-vindas,
+aniversário, primeira compra, personalizada) usam o link oficial
+`api.whatsapp.com/send/` (`src/lib/utils/whatsapp-admin-link.ts`) — um
+padrão deliberadamente diferente do `wa.me` usado no checkout
+(`lib/utils/whatsapp.ts`), já que são fluxos distintos (administradora →
+cliente vs. cliente → loja); o envio é sempre manual, e
+`whatsapp_message_logs` só registra "preparada"/"enviada manualmente" (a
+confirmação de envio é sempre uma ação explícita da administradora, nunca
+automática).
+
 ## Decisões técnicas relevantes
 
 - **Next.js 16 / React 19**: versões estáveis mais recentes no momento do

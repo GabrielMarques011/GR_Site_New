@@ -37,6 +37,7 @@ export async function countOrdersByPhone(phone: string): Promise<number> {
 export interface CreateOrderInput {
   customerName: string;
   customerPhone: string;
+  customerId?: string | null;
   items: OrderItemSnapshot[];
   subtotal: number;
   discountPercent: number;
@@ -44,28 +45,56 @@ export interface CreateOrderInput {
   isFirstPurchase: boolean;
 }
 
+/**
+ * Registra o pedido via a função `create_order()` (SECURITY DEFINER —
+ * migration 0005_fix_order_insert.sql), não por INSERT direto na tabela:
+ * o INSERT direto como a role `anon` falhava por RLS mesmo com a policy
+ * correta (causa não identificada após investigação extensa), igual ao
+ * padrão já usado para cadastro/reconhecimento de clientes (migration
+ * 0004_customers.sql). Ver SECURITY.md para o detalhe.
+ */
 export async function createOrder(input: CreateOrderInput): Promise<string> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("orders")
-    .insert({
-      customer_name: input.customerName,
-      customer_phone: normalizePhone(input.customerPhone),
-      items: input.items,
-      subtotal: input.subtotal,
-      discount_percent: input.discountPercent,
-      total: input.total,
-      is_first_purchase: input.isFirstPurchase,
-    })
-    .select("id")
-    .single();
+  const { data, error } = await supabase.rpc("create_order", {
+    p_customer_name: input.customerName,
+    p_customer_phone: normalizePhone(input.customerPhone),
+    p_customer_id: input.customerId ?? null,
+    p_items: input.items,
+    p_subtotal: input.subtotal,
+    p_discount_percent: input.discountPercent,
+    p_total: input.total,
+    p_is_first_purchase: input.isFirstPurchase,
+  });
 
   if (error) {
     throw new Error(`Falha ao registrar pedido: ${error.message}`);
   }
 
-  return data.id;
+  return data;
+}
+
+/** Corrige o desconto do pedido depois que o benefício de primeira compra
+ * é reservado (a reserva só pode acontecer depois que o pedido já existe,
+ * por causa da referência). Falha aqui nunca derruba o checkout — o pior
+ * caso é o pedido ficar registrado com o desconto de 0% no histórico. */
+export async function updateOrderDiscount(
+  id: string,
+  discountPercent: number,
+  total: number,
+  isFirstPurchase: boolean,
+): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_order_discount", {
+    p_order_id: id,
+    p_discount_percent: discountPercent,
+    p_total: total,
+    p_is_first_purchase: isFirstPurchase,
+  });
+
+  if (error) {
+    console.error("Falha ao atualizar desconto do pedido:", error.message);
+  }
 }
 
 export async function getOrders(): Promise<Order[]> {

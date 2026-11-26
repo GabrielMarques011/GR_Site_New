@@ -12,6 +12,17 @@
 - Testes unitários cobrindo as regras de negócio mais sensíveis (preço,
   promoção, validação, mensagem de WhatsApp).
 - Documentação completa do projeto.
+- Temas sazonais (campanhas) com seção em destaque na home e painel de
+  ativação com prazo de validade.
+- Cadastro e reconhecimento de clientes: cadastro simples sem login,
+  sessão persistente por dispositivo, recuperação em outro aparelho por
+  telefone + código, desconto de 5% na primeira compra com reserva
+  transacional, preenchimento automático no checkout, e painel completo de
+  gestão de clientes (indicadores, filtros, detalhes, benefício, mensagens
+  de WhatsApp preparadas/confirmadas manualmente).
+- Correção do registro de pedidos no histórico (o INSERT direto estava
+  bloqueado por RLS sem causa identificada — ver SECURITY.md), confirmado
+  com um pedido real salvo com o desconto de primeira compra aplicado.
 
 ## Pendente — depende de ação da proprietária/configuração externa
 
@@ -40,3 +51,7 @@
   GR Design).
 - Notificações por e-mail para a proprietária a cada novo pedido via
   WhatsApp (hoje o WhatsApp já cumpre esse papel).
+- Envio automático de mensagens (aniversário, boas-vindas) via WhatsApp
+  Cloud API da Meta — decisão explícita de não usar nesta versão (custo e
+  complexidade de credenciais/templates aprovados); hoje o painel só
+  identifica e prepara a mensagem, o envio é manual.

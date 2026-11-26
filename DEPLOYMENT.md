@@ -76,6 +76,11 @@ antes do deploy de produção.
 - [ ] "Finalizar pelo WhatsApp" abre o número correto
 - [ ] HTTPS ativo no domínio final
 - [ ] Nenhuma chave secreta aparece no bundle (`view-source` / aba Network)
+- [ ] Cadastro em `/cadastro` funciona e o cookie de sessão é `Secure` em
+      produção (confirmar nas DevTools → Application → Cookies)
+- [ ] `supabase/migrations/0004_customers.sql` aplicada antes de divulgar o
+      cadastro de clientes (sem ela, a loja funciona normal, só sem
+      reconhecimento)
 
 ## 6. Limites do plano gratuito a observar
 

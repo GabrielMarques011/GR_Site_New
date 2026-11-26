@@ -11,6 +11,7 @@ import {
   ScrollText,
   Settings,
   Sparkles,
+  Users,
 } from "lucide-react";
 
 import { logoutAction } from "@/features/auth/actions";
@@ -30,6 +31,7 @@ const NAV_ITEMS = [
     label: "Campanhas",
     icon: Sparkles,
   },
+  { href: "/administracao/clientes", label: "Clientes", icon: Users },
   { href: "/administracao/historico", label: "Histórico", icon: History },
   {
     href: "/administracao/configuracoes",

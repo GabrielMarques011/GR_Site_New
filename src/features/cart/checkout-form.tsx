@@ -7,7 +7,10 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { onlyDigits } from "@/lib/utils/phone";
 import type { CartItem } from "@/types/domain";
+
+import type { RecognizedCustomer } from "@/services/customers";
 
 import {
   checkDiscountEligibilityAction,
@@ -17,22 +20,32 @@ import {
 
 export function CheckoutForm({
   items,
+  recognizedCustomer,
   onPlaced,
   onCancel,
 }: {
   items: CartItem[];
+  recognizedCustomer?: RecognizedCustomer | null;
   onPlaced: (result: PlaceOrderState) => void;
   onCancel: () => void;
 }) {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const [name, setName] = useState(recognizedCustomer?.fullName ?? "");
+  const [phone, setPhone] = useState(
+    recognizedCustomer ? onlyDigits(recognizedCustomer.phone) : "",
+  );
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [eligibleForDiscount, setEligibleForDiscount] = useState(false);
+  const [eligibleForDiscount, setEligibleForDiscount] = useState(
+    recognizedCustomer?.benefitStatus === "disponivel",
+  );
   const [pending, startTransition] = useTransition();
   const [checkingPhone, startPhoneCheck] = useTransition();
 
   function handlePhoneBlur() {
+    // Cliente reconhecido já tem a situação do benefício resolvida pelo
+    // próprio cadastro — não precisa (e não deve) recalcular pela
+    // heurística de telefone usada para quem não está reconhecido.
+    if (recognizedCustomer) return;
     if (!phone.trim()) return;
     startPhoneCheck(async () => {
       const { isFirstPurchase } = await checkDiscountEligibilityAction(phone);
@@ -90,7 +103,9 @@ export function CheckoutForm({
           Só mais um passo
         </h3>
         <p className="mt-0.5 text-sm text-ink-700">
-          Para finalizar, nos diga seu nome e WhatsApp.
+          {recognizedCustomer
+            ? "Já preenchemos seus dados — confira antes de finalizar."
+            : "Para finalizar, nos diga seu nome e WhatsApp."}
         </p>
       </div>
 

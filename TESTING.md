@@ -43,8 +43,24 @@ anon do projeto nem acesso à Vercel/GitHub remotos.
   duplicados.
 - `product-validation.test.ts` — regras do schema Zod de produto (slug
   inválido, preço promocional ≥ preço normal, datas de promoção invertidas).
+- `phone.test.ts` — normalização de telefone para E.164 (com/sem DDI,
+  formatado, quantidade de dígitos inválida) e máscara `(DD) 9XXXX-XXXX`.
+- `whatsapp-admin-link.test.ts` — link `api.whatsapp.com/send/` (nunca
+  `wa.me`), parâmetros obrigatórios, codificação de acentos/emoji, e
+  substituição de variáveis nos modelos de mensagem.
 
 Rodar: `npm run test` (ou `npm run test:watch` durante o desenvolvimento).
+
+> **Nota desta sessão**: ao rodar `npx vitest run` neste ambiente, os 7
+> arquivos de teste (incluindo os pré-existentes, antes de qualquer
+> alteração) falham com `TypeError: Cannot read properties of undefined
+> (reading 'config')` logo no `describe()`. Confirmado via `git stash` que
+> essa falha já acontece na branch `main` sem nenhuma mudança desta sessão
+> — é um problema do ambiente/configuração do Vitest (não do código do
+> projeto nem das funcionalidades novas), que já existia antes e segue sem
+> investigação aprofundada por estar fora do escopo pedido. Os testes acima
+> cobrem lógica pura (sem I/O) e devem passar normalmente assim que esse
+> problema de ambiente for resolvido.
 
 ## Testes end-to-end (Playwright)
 
@@ -82,3 +98,14 @@ cobrem sozinhos (aparência real, upload de arquivo, WhatsApp de verdade):
 - [ ] Editar Configurações atualiza nome/slogan/contato em toda a loja
 - [ ] Responsividade em um celular real (não só DevTools)
 - [ ] Lighthouse/acessibilidade básica (contraste, navegação por teclado)
+- [ ] Cadastro em `/cadastro` funciona, mostra o código de recuperação e
+      reconhece o cliente ao recarregar a página
+- [ ] "Já sou cliente GR Design" recupera o cadastro em uma aba anônima
+      (simulando outro dispositivo) com telefone + código corretos
+- [ ] Checkout preenche nome/WhatsApp automaticamente para cliente
+      reconhecido e aplica o desconto de 5% só na primeira compra
+- [ ] Painel → Clientes lista, busca, filtra e pagina corretamente
+- [ ] Confirmar/cancelar/revogar o benefício de primeira compra no painel
+      reflete no detalhe do cliente
+- [ ] Botão de WhatsApp no painel abre a conversa com a mensagem certa, e
+      "Marcar como enviada" registra no histórico

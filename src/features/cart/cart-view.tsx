@@ -8,6 +8,8 @@ import { Alert } from "@/components/ui/alert";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils/currency";
 
+import type { RecognizedCustomer } from "@/services/customers";
+
 import { useCart } from "./cart-context";
 import { CartItemRow } from "./cart-item-row";
 import { CheckoutForm } from "./checkout-form";
@@ -22,7 +24,13 @@ const ISSUE_LABELS: Record<CartIssue["type"], (issue: CartIssue) => string> = {
   quantity_adjusted: (issue) => `A quantidade de "${issue.name}" foi ajustada.`,
 };
 
-export function CartView({ whatsapp }: { whatsapp: string | null }) {
+export function CartView({
+  whatsapp,
+  recognizedCustomer,
+}: {
+  whatsapp: string | null;
+  recognizedCustomer?: RecognizedCustomer | null;
+}) {
   const { items, subtotal, replaceItems, clear } = useCart();
   const [issues, setIssues] = useState<CartIssue[]>([]);
   const [checking, startTransition] = useTransition();
@@ -150,6 +158,7 @@ export function CartView({ whatsapp }: { whatsapp: string | null }) {
         {showCheckoutForm && (
           <CheckoutForm
             items={items}
+            recognizedCustomer={recognizedCustomer}
             onPlaced={handlePlaced}
             onCancel={() => setShowCheckoutForm(false)}
           />

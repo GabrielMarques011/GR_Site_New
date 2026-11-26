@@ -17,7 +17,16 @@ export type AuditAction =
   | "campaign.create"
   | "campaign.activate"
   | "campaign.deactivate"
-  | "campaign.delete";
+  | "campaign.delete"
+  | "customer.update"
+  | "customer.delete"
+  | "customer.benefit_confirm"
+  | "customer.benefit_cancel"
+  | "customer.benefit_revoke"
+  | "customer.message_prepared"
+  | "customer.message_confirmed"
+  | "customer.message_cancelled"
+  | "whatsapp_template.update";
 
 /**
  * Registra uma ação administrativa relevante. Nunca recebe segredos,

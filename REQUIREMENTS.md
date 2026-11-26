@@ -20,6 +20,12 @@ checklist de cobertura.
 | Checkout pede nome + WhatsApp e registra o pedido no histórico                                                          | `src/features/cart/checkout-form.tsx`, `src/features/cart/checkout-actions.ts`   |
 | Desconto de 5% automático na primeira compra (por telefone)                                                             | `checkout-actions.ts` (`countOrdersByPhone` + `count_orders_by_phone` no banco)  |
 | Sem pagamento online / sem afirmar pedido confirmado                                                                    | Não implementado de propósito; texto deixa claro que é "combinado pelo WhatsApp" |
+| Cadastro simples de clientes (sem login/senha/e-mail/CPF), `/cadastro`                                                  | `src/features/customers/register-form.tsx`, `src/app/(store)/cadastro/`         |
+| Reconhecimento automático no mesmo dispositivo (cookie de sessão)                                                       | `src/lib/customer-session.ts`, `src/features/customers/recognize.ts`            |
+| Recuperação do cadastro em outro dispositivo por telefone + código                                                     | `src/features/customers/recover-form.tsx`, função `recover_customer_session()`  |
+| Mensagem de boas-vindas para cliente reconhecido                                                                       | `src/features/customers/welcome-banner.tsx`                                      |
+| Desconto de 5% na primeira compra ligado ao cadastro (reserva transacional)                                             | `src/services/customer-benefits.ts`, função `reserve_first_purchase_benefit()`  |
+| Preenchimento automático de nome/WhatsApp no checkout para cliente reconhecido                                          | `src/features/cart/checkout-form.tsx`                                           |
 
 ## Painel administrativo
 
@@ -35,6 +41,12 @@ checklist de cobertura.
 | Configurações da loja (`store_settings`)                                                                     | `src/features/administration/settings/*`                                            |
 | Auditoria de ações administrativas                                                                           | `src/services/audit.ts`, `src/app/administracao/(painel)/auditoria/`                |
 | Histórico de pedidos com status (em andamento/concluído/recusado)                                            | `src/features/administration/orders/*`, `src/app/administracao/(painel)/historico/` |
+| Gestão de clientes (listagem, busca, filtros, paginação, indicadores, detalhes, edição, exclusão)            | `src/features/administration/customers/*`, `src/app/administracao/(painel)/clientes/` |
+| Controle do benefício de primeira compra (confirmar/cancelar reserva/revogar)                                | `src/features/administration/customers/benefit-panel.tsx`                           |
+| Identificação de aniversariantes (hoje/mês) e envio manual de parabéns pelo WhatsApp                         | filtro "Aniversariantes do mês" em `clientes/`, `whatsapp-send-button.tsx`           |
+| Links do WhatsApp no formato oficial `api.whatsapp.com/send/`, sem API paga, envio sempre manual              | `src/lib/utils/whatsapp-admin-link.ts`                                              |
+| Modelos de mensagem editáveis (boas-vindas/aniversário/primeira compra)                                      | `src/app/administracao/(painel)/clientes/modelos/`                                  |
+| Histórico de mensagens preparadas/confirmadas manualmente                                                    | `src/services/whatsapp-message-logs.ts`, `message-history.tsx`                      |
 
 ## Infraestrutura e segurança
 
@@ -53,3 +65,11 @@ checklist de cobertura.
 - Criação automática de novos administradores.
 - Alterações destrutivas no banco remoto sem aprovação.
 - Deploy e push para repositórios remotos sem autorização explícita.
+- WhatsApp Cloud API ou qualquer serviço pago de mensageria — por pedido
+  explícito, mensagens usam apenas o link oficial `api.whatsapp.com/send/`
+  com envio manual pela administradora.
+- Envio automático de mensagens (boas-vindas, aniversário, promocional) —
+  o sistema só identifica e prepara a mensagem; confirmar o envio é sempre
+  uma ação manual.
+- Cron/Edge Function para aniversariantes — a identificação acontece sob
+  demanda, quando o painel é acessado.

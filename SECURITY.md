@@ -125,13 +125,95 @@ institucional):
   tema nunca apaga produtos, só desvincula (mesmo comportamento já usado em
   `category_id`).
 
+## Cadastro e reconhecimento de clientes (migration `0004_customers.sql`)
+
+Dado pessoal (nome, telefone, data de nascimento, endereço completo), e sem
+Supabase Auth (o cliente nunca cria usuário/senha) — então o desenho de
+segurança é o mais cuidadoso do projeto:
+
+- **Nenhum SELECT/INSERT/UPDATE/DELETE público em `customers`,
+  `customer_sessions` ou `customer_recovery_codes`.** Toda a interação
+  pública (cadastrar, reconhecer, recuperar em outro aparelho, gerar novo
+  código) passa por funções `SECURITY DEFINER` com `search_path` travado
+  (mesmo padrão de `is_admin()`/`count_orders_by_phone()`):
+  `register_customer`, `get_customer_session`, `recover_customer_session`,
+  `rotate_recovery_code`, `revoke_customer_session`. Nenhuma delas devolve
+  dados de um cliente a partir do telefone de outro — a busca é sempre por
+  hash de token de sessão (cookie) ou por telefone **+** hash do código de
+  recuperação, nunca um sozinho.
+- **Sessão**: token aleatório de 256 bits gerado no servidor
+  (`src/lib/customer-session.ts`), guardado em cookie `HttpOnly`,
+  `Secure` em produção, `SameSite=Lax`, validade de 30 dias. Só o **hash**
+  (SHA-256) do token fica em `customer_sessions.token_hash` — o valor em si
+  nunca é persistido, só existe no cookie do navegador do cliente.
+- **Código de recuperação**: gerado uma única vez, mostrado ao cliente logo
+  após o cadastro (tela de sucesso) para ele copiar/guardar — nunca
+  reenviado automaticamente (o projeto não usa API de mensageria do
+  WhatsApp). Só o hash fica no banco. `recover_customer_session()` limita
+  tentativas (5) com intervalo de 15 minutos, e sempre devolve o mesmo erro
+  genérico ("telefone ou código inválidos") tanto para telefone inexistente
+  quanto para código errado — evita que alguém descubra se um número está
+  cadastrado só testando combinações.
+- **Benefício de primeira compra**: a reserva (`reserve_first_purchase_benefit`)
+  é uma troca atômica `disponivel -> reservado` feita num único `UPDATE`
+  com `WHERE status = 'disponivel'` — o próprio banco garante que duas
+  finalizações concorrentes nunca reservem o mesmo benefício duas vezes,
+  sem precisar de lock explícito. A confirmação de uso
+  (`disponivel`/`reservado` -> `utilizado`) é sempre uma ação manual da
+  administradora, nunca automática.
+- **Administradoras leem/gerenciam tudo** (`customers`, `customer_benefits`,
+  `whatsapp_message_templates`, `whatsapp_message_logs`) via `is_admin()`,
+  igual às demais tabelas administrativas.
+- **`orders.customer_id`** usa `on delete set null`: excluir um cadastro de
+  cliente nunca apaga o histórico de pedidos já registrado, só desvincula.
+- **Mensagens pelo WhatsApp**: o projeto propositalmente não usa WhatsApp
+  Cloud API nem nenhum serviço de envio automático — os links usam o
+  formato oficial `https://api.whatsapp.com/send/?phone=...&text=...`
+  (nunca `wa.me` nesse fluxo administrativo) e o envio é sempre manual,
+  clicado pela administradora dentro do próprio WhatsApp.
+  `whatsapp_message_logs` só registra que uma mensagem foi *preparada*
+  (link aberto) e, depois, que a administradora *confirmou manualmente* o
+  envio — o sistema nunca marca como enviada sozinho.
+
+## `orders` — INSERT direto bloqueado por RLS sem causa identificada (migration `0005_fix_order_insert.sql`)
+
+Durante os testes desta sessão, todo `INSERT` direto em `public.orders` como
+a role `anon` passou a falhar com `"new row violates row-level security
+policy for table orders"` — mesmo com a policy `orders_public_insert`
+(migration `0002_orders.sql`) confirmada correta e permissiva, os grants de
+tabela certos para `anon`/`authenticated`, RLS habilitado sem `FORCE`, e
+todas as condições do `WITH CHECK` testadas como verdadeiras (via uma
+função SQL temporária executando como a role `anon` de verdade, com os
+mesmos valores exatos que o checkout envia — `current_user` confirmado
+como `anon`). Não foi possível identificar a causa raiz após uma
+investigação extensa (comparação de papéis, cache de schema recarregado,
+verificação de tabelas/views duplicadas, triggers customizados — todos
+descartados). Não há como confirmar há quanto tempo isso estava
+acontecendo, já que o checkout pelo WhatsApp nunca dependeu do sucesso
+desse `INSERT` (ver próxima seção).
+
+A correção: `create_order()` e `update_order_discount()`, funções
+`SECURITY DEFINER` (mesmo padrão já usado com sucesso em
+`register_customer()` e nas demais funções da migration
+`0004_customers.sql`), substituem o `INSERT`/`UPDATE` direto na tabela. A
+mesma validação que a policy fazia continua acontecendo — agora como
+checagem explícita dentro da função, com `RAISE EXCEPTION` em vez de
+depender do `WITH CHECK`. A policy `orders_public_insert` continua
+existindo (não remove nada), só deixa de ser o caminho usado pela
+aplicação.
+
 ## Checklist de segurança para produção (antes de divulgar o domínio)
 
 - [ ] Revisar e aplicar `0001_security_hardening.sql` no projeto Supabase.
 - [x] `0002_orders.sql` aplicada no Supabase (histórico de pedidos e
       desconto de primeira compra já funcionam de verdade).
-- [ ] Revisar e aplicar `0003_seasonal_campaigns.sql` no projeto Supabase
-      (temas sazonais da home e do painel).
+- [x] `0003_seasonal_campaigns.sql` aplicada no Supabase (temas sazonais da
+      home e do painel).
+- [x] `0004_customers.sql` aplicada no Supabase (cadastro e reconhecimento
+      de clientes, benefício de primeira compra, mensagens pelo WhatsApp
+      preparadas no painel).
+- [x] `0005_fix_order_insert.sql` aplicada no Supabase (corrige o registro
+      de pedidos no histórico — ver seção acima).
 - [ ] Confirmar que `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` na Vercel é a
       chave anon/publicável (nunca `service_role`/`sb_secret_`).
 - [ ] Rodar `npm run build` e inspecionar o bundle client-side em busca de

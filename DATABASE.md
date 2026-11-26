@@ -22,7 +22,8 @@
 | `store_settings` | `id`, `store_name`, `slogan`, `about_text`, `whatsapp`, `instagram_url`, `address`, `maps_url`, `logo_url`, `updated_at` |
 | `audit_logs`     | `id`, `user_id`, `action`, `entity`, `entity_id`, `details`, `created_at`                                                |
 | `orders`         | Criada pela migration `0002_orders.sql` — **aplicada** no Supabase; ver detalhes abaixo                                  |
-| `seasonal_campaigns` | Criada pela migration `0003_seasonal_campaigns.sql` — **proposta, não aplicada**; ver detalhes abaixo                |
+| `seasonal_campaigns` | Criada pela migration `0003_seasonal_campaigns.sql` — **aplicada** no Supabase; ver detalhes abaixo                   |
+| `customers`, `customer_sessions`, `customer_recovery_codes`, `customer_benefits`, `whatsapp_message_templates`, `whatsapp_message_logs` | Criadas pela migration `0004_customers.sql` — **aplicada** no Supabase; ver detalhes abaixo |
 
 Campos de `products`: `id`, `category_id`, `campaign_id` (adicionado pela
 migration `0003_seasonal_campaigns.sql`), `name`, `slug`, `description`,
@@ -99,6 +100,49 @@ Campos de `seasonal_campaigns`: `id`, `slug`, `name`, `active`,
 `active_until` (data; nulo = sem prazo), `is_default` (true para os 11
 temas fixos, que só podem ser desativados, nunca excluídos), `display_order`,
 `created_at`, `updated_at`.
+
+- `0004_customers.sql` — cria o sistema de cadastro/reconhecimento de
+  clientes: `customers` (dados pessoais e endereço, sem login/senha/e-mail),
+  `customer_sessions` (sessão persistente por dispositivo, só o hash do
+  token é gravado), `customer_recovery_codes` (código mostrado uma vez após
+  o cadastro, usado para recuperar o cadastro em outro aparelho — nunca
+  enviado automaticamente, pois o projeto não usa API de mensageria),
+  `customer_benefits` (desconto de 5% na primeira compra, com reserva
+  transacional ligada a um pedido), `whatsapp_message_templates` (boas-
+  vindas/aniversário/primeira compra, editáveis no painel) e
+  `whatsapp_message_logs` (registro manual de mensagem preparada →
+  enviada/cancelada — o sistema nunca sabe sozinho se uma mensagem foi
+  enviada de verdade, só o que a administradora confirma). Também adiciona
+  `orders.customer_id`, ligando pedidos ao cadastro quando o comprador
+  estava reconhecido. **Status: aplicada no Supabase.** Todo o código novo
+  (`src/services/customers.ts`, `customer-benefits.ts`,
+  `whatsapp-templates.ts`, `whatsapp-message-logs.ts`, e o `customer_id`
+  em `src/services/orders.ts`) foi escrito para degradar sem quebrar o
+  cadastro/edição/listagem de produtos, o checkout pelo WhatsApp e a home —
+  se essa migration algum dia sumir/for revertida, a loja volta a
+  funcionar exatamente como antes, só sem reconhecimento de clientes.
+- `0005_fix_order_insert.sql` — corrige o registro de pedidos no
+  histórico: durante os testes desta sessão, o `INSERT` direto em
+  `orders` como a role `anon` passou a falhar por RLS sem causa
+  identificada (policy, grants e condições todas confirmadas corretas —
+  ver SECURITY.md para o detalhe da investigação). A correção troca o
+  `INSERT`/`UPDATE` direto por duas funções `SECURITY DEFINER`
+  (`create_order()`, `update_order_discount()`), mesmo padrão já usado com
+  sucesso na migration `0004_customers.sql`. **Status: aplicada no
+  Supabase** — confirmado com um pedido real salvo com o desconto de
+  primeira compra corretamente aplicado.
+
+Campos de `customers`: `id`, `full_name`, `phone`, `phone_normalized`
+(E.164, único), `birth_date`, `zip_code`, `street`, `number`, `complement`,
+`neighborhood`, `city`, `state`, `whatsapp_marketing_opt_in`,
+`consent_date`, `consent_version`, `first_purchase_discount_used`,
+`first_purchase_discount_used_at`, timestamps. Nenhuma linha de
+`customers`/`customer_sessions`/`customer_recovery_codes` é lida ou escrita
+diretamente pelo cliente — todo o fluxo público passa pelas funções
+`register_customer`, `get_customer_session`, `recover_customer_session`,
+`rotate_recovery_code`, `revoke_customer_session` e
+`reserve_first_purchase_benefit` (todas `SECURITY DEFINER`, mesmo padrão de
+`is_admin()`/`count_orders_by_phone()`).
 
 ### Regra para novas migrations
 
