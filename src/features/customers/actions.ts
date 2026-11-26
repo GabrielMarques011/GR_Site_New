@@ -4,32 +4,28 @@ import { revalidatePath } from "next/cache";
 
 import {
   clearCustomerSessionCookie,
-  generateRecoveryCode,
   generateSessionToken,
   getCustomerSessionToken,
-  hashRecoveryCode,
   hashSecret,
   sessionExpiryDate,
   setCustomerSessionCookie,
-  setRegistrationFlashCookie,
 } from "@/lib/customer-session";
 import { normalizePhoneE164 } from "@/lib/utils/phone";
 import {
   CONSENT_VERSION,
-  customerRecoverySchema,
+  customerLoginSchema,
   customerRegistrationSchema,
 } from "@/lib/validations/customer";
 import {
-  recoverCustomerSession,
+  loginCustomerByPhone,
   registerCustomer,
   revokeCustomerSession,
-  rotateRecoveryCode,
 } from "@/services/customers";
 
 export interface RegisterCustomerState {
   error: string | null;
   fieldErrors?: Record<string, string>;
-  success?: { fullName: string; recoveryCode: string };
+  success?: { fullName: string };
 }
 
 function parseRegisterForm(formData: FormData) {
@@ -76,7 +72,6 @@ export async function registerCustomerAction(
   }
 
   const sessionToken = generateSessionToken();
-  const recoveryCode = generateRecoveryCode();
 
   try {
     const result = await registerCustomer({
@@ -97,19 +92,14 @@ export async function registerCustomerAction(
         : null,
       sessionTokenHash: hashSecret(sessionToken),
       sessionExpiresAt: sessionExpiryDate().toISOString(),
-      recoveryCodeHash: hashRecoveryCode(recoveryCode),
     });
 
     await setCustomerSessionCookie(sessionToken);
-    await setRegistrationFlashCookie({
-      fullName: result.fullName,
-      recoveryCode,
-    });
     revalidatePath("/");
 
     return {
       error: null,
-      success: { fullName: result.fullName, recoveryCode },
+      success: { fullName: result.fullName },
     };
   } catch (error) {
     return {
@@ -121,19 +111,23 @@ export async function registerCustomerAction(
   }
 }
 
-export interface RecoverCustomerState {
+export interface LoginCustomerState {
   error: string | null;
   fieldErrors?: Record<string, string>;
   success?: { fullName: string };
 }
 
-export async function recoverCustomerAction(
-  _prevState: RecoverCustomerState,
+/**
+ * "Login" só pelo WhatsApp: localiza o cadastro e reconhece neste
+ * dispositivo. Decisão deliberada de simplicidade sobre segurança (pedido
+ * explícito) — não há verificação de posse do número. Ver SECURITY.md.
+ */
+export async function loginCustomerAction(
+  _prevState: LoginCustomerState,
   formData: FormData,
-): Promise<RecoverCustomerState> {
-  const parsed = customerRecoverySchema.safeParse({
+): Promise<LoginCustomerState> {
+  const parsed = customerLoginSchema.safeParse({
     phone: formData.get("phone"),
-    recovery_code: formData.get("recovery_code"),
   });
 
   if (!parsed.success) {
@@ -159,15 +153,16 @@ export async function recoverCustomerAction(
   const sessionToken = generateSessionToken();
 
   try {
-    const result = await recoverCustomerSession({
+    const result = await loginCustomerByPhone({
       phoneNormalized,
-      codeHash: hashRecoveryCode(parsed.data.recovery_code),
       sessionTokenHash: hashSecret(sessionToken),
       sessionExpiresAt: sessionExpiryDate().toISOString(),
     });
 
     if (!result) {
-      return { error: "Telefone ou código de recuperação inválidos." };
+      return {
+        error: "Não encontramos nenhum cadastro com esse WhatsApp.",
+      };
     }
 
     await setCustomerSessionCookie(sessionToken);
@@ -177,7 +172,7 @@ export async function recoverCustomerAction(
   } catch (error) {
     return {
       error:
-        error instanceof Error ? error.message : "Falha ao recuperar cadastro.",
+        error instanceof Error ? error.message : "Falha ao acessar o cadastro.",
     };
   }
 }
@@ -189,31 +184,4 @@ export async function logoutCustomerAction(): Promise<void> {
   }
   await clearCustomerSessionCookie();
   revalidatePath("/");
-}
-
-export interface RotateRecoveryCodeState {
-  error: string | null;
-  newCode?: string;
-}
-
-export async function rotateRecoveryCodeAction(): Promise<RotateRecoveryCodeState> {
-  const token = await getCustomerSessionToken();
-  if (!token) {
-    return {
-      error:
-        "Você precisa estar reconhecido neste dispositivo para gerar um novo código.",
-    };
-  }
-
-  const newCode = generateRecoveryCode();
-  const ok = await rotateRecoveryCode(
-    hashSecret(token),
-    hashRecoveryCode(newCode),
-  );
-
-  if (!ok) {
-    return { error: "Não foi possível gerar um novo código. Tente novamente." };
-  }
-
-  return { error: null, newCode };
 }

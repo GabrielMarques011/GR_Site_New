@@ -4,11 +4,11 @@ import { useState } from "react";
 
 import { cn } from "@/lib/utils/cn";
 
-import { RecoverForm } from "./recover-form";
+import { PhoneLoginForm } from "./phone-login-form";
 import { RegisterForm } from "./register-form";
 
 export function CadastroTabs() {
-  const [mode, setMode] = useState<"register" | "recover">("register");
+  const [mode, setMode] = useState<"register" | "login">("register");
 
   return (
     <div>
@@ -27,10 +27,10 @@ export function CadastroTabs() {
         </button>
         <button
           type="button"
-          onClick={() => setMode("recover")}
+          onClick={() => setMode("login")}
           className={cn(
             "focus-ring flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-            mode === "recover"
+            mode === "login"
               ? "bg-white text-lilac-800 shadow-sm"
               : "text-ink-600 hover:text-ink-900",
           )}
@@ -39,7 +39,7 @@ export function CadastroTabs() {
         </button>
       </div>
 
-      {mode === "register" ? <RegisterForm /> : <RecoverForm />}
+      {mode === "register" ? <RegisterForm /> : <PhoneLoginForm />}
     </div>
   );
 }

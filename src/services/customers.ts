@@ -35,7 +35,6 @@ export interface RegisterCustomerInput {
   consentVersion: string | null;
   sessionTokenHash: string;
   sessionExpiresAt: string;
-  recoveryCodeHash: string;
 }
 
 export async function registerCustomer(
@@ -59,7 +58,6 @@ export async function registerCustomer(
     p_consent_version: input.consentVersion,
     p_session_token_hash: input.sessionTokenHash,
     p_session_expires_at: input.sessionExpiresAt,
-    p_recovery_code_hash: input.recoveryCodeHash,
   });
 
   if (error) {
@@ -94,7 +92,6 @@ export interface AdminCreateCustomerInput {
   state: string;
   whatsappOptIn: boolean;
   consentVersion: string | null;
-  recoveryCodeHash: string;
 }
 
 /**
@@ -121,7 +118,6 @@ export async function createCustomerByAdmin(
     p_state: input.state,
     p_whatsapp_opt_in: input.whatsappOptIn,
     p_consent_version: input.consentVersion,
-    p_recovery_code_hash: input.recoveryCodeHash,
   });
 
   if (error) {
@@ -199,22 +195,29 @@ export async function getCustomerBySessionToken(
   };
 }
 
-export async function recoverCustomerSession(input: {
+/**
+ * "Login" só por telefone: localiza o cadastro pelo WhatsApp e cria uma
+ * sessão nova neste dispositivo. Devolve `null` se não existir cadastro
+ * com esse telefone.
+ *
+ * Decisão deliberada de simplicidade sobre segurança (pedido explícito):
+ * não há nenhuma verificação de posse do número — quem souber o WhatsApp
+ * de alguém consegue se passar por ela. Ver SECURITY.md.
+ */
+export async function loginCustomerByPhone(input: {
   phoneNormalized: string;
-  codeHash: string;
   sessionTokenHash: string;
   sessionExpiresAt: string;
 }): Promise<{ customerId: string; fullName: string } | null> {
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("recover_customer_session", {
+  const { data, error } = await supabase.rpc("login_customer_by_phone", {
     p_phone_normalized: input.phoneNormalized,
-    p_code_hash: input.codeHash,
     p_session_token_hash: input.sessionTokenHash,
     p_session_expires_at: input.sessionExpiresAt,
   });
 
   if (error) {
-    throw new Error(error.message || "Falha ao recuperar cadastro.");
+    throw new Error(error.message || "Falha ao acessar o cadastro.");
   }
 
   const row = data?.[0];
@@ -224,20 +227,6 @@ export async function recoverCustomerSession(input: {
 export async function revokeCustomerSession(tokenHash: string): Promise<void> {
   const supabase = await createClient();
   await supabase.rpc("revoke_customer_session", { p_token_hash: tokenHash });
-}
-
-export async function rotateRecoveryCode(
-  tokenHash: string,
-  newCodeHash: string,
-): Promise<boolean> {
-  const supabase = await createClient();
-  const { data, error } = await supabase.rpc("rotate_recovery_code", {
-    p_session_token_hash: tokenHash,
-    p_new_code_hash: newCodeHash,
-  });
-
-  if (error) return false;
-  return Boolean(data);
 }
 
 // ---------------------------------------------------------------------------

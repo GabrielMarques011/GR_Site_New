@@ -337,7 +337,6 @@ export type Database = {
           p_consent_version: string | null;
           p_session_token_hash: string;
           p_session_expires_at: string;
-          p_recovery_code_hash: string;
         };
         Returns: { customer_id: string; full_name: string }[];
       };
@@ -356,7 +355,14 @@ export type Database = {
           p_state: string;
           p_whatsapp_opt_in: boolean;
           p_consent_version: string | null;
-          p_recovery_code_hash: string;
+        };
+        Returns: { customer_id: string; full_name: string }[];
+      };
+      login_customer_by_phone: {
+        Args: {
+          p_phone_normalized: string;
+          p_session_token_hash: string;
+          p_session_expires_at: string;
         };
         Returns: { customer_id: string; full_name: string }[];
       };
@@ -378,19 +384,6 @@ export type Database = {
           benefit_status: string;
           benefit_discount_percentage: number | null;
         }[];
-      };
-      recover_customer_session: {
-        Args: {
-          p_phone_normalized: string;
-          p_code_hash: string;
-          p_session_token_hash: string;
-          p_session_expires_at: string;
-        };
-        Returns: { customer_id: string; full_name: string }[];
-      };
-      rotate_recovery_code: {
-        Args: { p_session_token_hash: string; p_new_code_hash: string };
-        Returns: boolean;
       };
       revoke_customer_session: {
         Args: { p_token_hash: string };

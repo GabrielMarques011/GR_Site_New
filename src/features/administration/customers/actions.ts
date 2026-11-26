@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
-import { generateRecoveryCode, hashRecoveryCode } from "@/lib/customer-session";
 import { normalizePhoneE164 } from "@/lib/utils/phone";
 import {
   CONSENT_VERSION,
@@ -45,7 +44,7 @@ function revalidateCustomerPaths(id?: string) {
 export interface CreateCustomerState {
   error: string | null;
   fieldErrors?: Record<string, string>;
-  success?: { customerId: string; fullName: string; recoveryCode: string };
+  success?: { customerId: string; fullName: string };
 }
 
 export async function createCustomerAction(
@@ -87,8 +86,6 @@ export async function createCustomerAction(
     };
   }
 
-  const recoveryCode = generateRecoveryCode();
-
   try {
     const result = await createCustomerByAdmin({
       fullName: parsed.data.full_name,
@@ -106,7 +103,6 @@ export async function createCustomerAction(
       consentVersion: parsed.data.whatsapp_marketing_opt_in
         ? CONSENT_VERSION
         : null,
-      recoveryCodeHash: hashRecoveryCode(recoveryCode),
     });
 
     await logAuditEvent(
@@ -124,7 +120,6 @@ export async function createCustomerAction(
       success: {
         customerId: result.customerId,
         fullName: result.fullName,
-        recoveryCode,
       },
     };
   } catch (error) {

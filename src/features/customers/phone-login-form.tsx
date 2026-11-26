@@ -9,11 +9,10 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { maskBrazilianPhone } from "@/lib/utils/phone";
 
-import { recoverCustomerAction } from "./actions";
+import { loginCustomerAction } from "./actions";
 
-export function RecoverForm() {
+export function PhoneLoginForm() {
   const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
@@ -26,10 +25,9 @@ export function RecoverForm() {
 
     const formData = new FormData();
     formData.set("phone", phone);
-    formData.set("recovery_code", code);
 
     startTransition(async () => {
-      const result = await recoverCustomerAction({ error: null }, formData);
+      const result = await loginCustomerAction({ error: null }, formData);
       if (result.error) {
         setError(result.error);
         setFieldErrors(result.fieldErrors ?? {});
@@ -61,18 +59,18 @@ export function RecoverForm() {
       {error && <Alert variant="danger">{error}</Alert>}
 
       <p className="text-sm text-ink-700">
-        Informe o WhatsApp e o código de recuperação que você recebeu quando fez
-        seu cadastro.
+        Informe o WhatsApp que você usou no cadastro para acessar seus dados
+        neste aparelho.
       </p>
 
       <Field
         label="WhatsApp"
-        htmlFor="recover-phone"
+        htmlFor="login-phone"
         error={fieldErrors.phone}
         required
       >
         <Input
-          id="recover-phone"
+          id="login-phone"
           inputMode="tel"
           placeholder="(11) 91933-5496"
           value={phone}
@@ -80,29 +78,9 @@ export function RecoverForm() {
         />
       </Field>
 
-      <Field
-        label="Código de recuperação"
-        htmlFor="recover-code"
-        error={fieldErrors.recovery_code}
-        hint="Ex: ABCD-EFGH-JKLM"
-        required
-      >
-        <Input
-          id="recover-code"
-          value={code}
-          onChange={(event) => setCode(event.target.value.toUpperCase())}
-          className="font-mono tracking-wide"
-        />
-      </Field>
-
       <Button type="submit" size="lg" isLoading={pending}>
-        Recuperar meu cadastro
+        Acessar meu cadastro
       </Button>
-
-      <p className="text-xs text-ink-500">
-        Perdeu seu código? Entre em contato com a GR Design para recuperação
-        assistida.
-      </p>
     </form>
   );
 }

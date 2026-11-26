@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Loader2, PartyPopper } from "lucide-react";
 import type { z } from "zod";
 
 import { Alert } from "@/components/ui/alert";
@@ -19,7 +19,6 @@ import {
 } from "@/lib/validations/customer";
 
 import { registerCustomerAction } from "./actions";
-import { RegistrationSuccessCard } from "./registration-success-card";
 
 // `whatsapp_marketing_opt_in` tem `.default(false)` no schema, então o tipo
 // "bruto" (antes da validação) difere do tipo validado — mesmo padrão já
@@ -80,10 +79,7 @@ export function RegisterForm() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
   const [cepLoading, setCepLoading] = useState(false);
-  const [success, setSuccess] = useState<{
-    fullName: string;
-    recoveryCode: string;
-  } | null>(null);
+  const [success, setSuccess] = useState<{ fullName: string } | null>(null);
 
   const {
     register,
@@ -152,7 +148,20 @@ export function RegisterForm() {
   }
 
   if (success) {
-    return <RegistrationSuccessCard recoveryCode={success.recoveryCode} />;
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-2xl border border-lilac-200 bg-lilac-50/60 p-6 text-center">
+        <PartyPopper className="size-10 text-lilac-600" />
+        <h2 className="font-display text-xl font-semibold text-ink-900">
+          Cadastro realizado com sucesso! 💜
+        </h2>
+        <p className="text-ink-700">
+          Agora você faz parte da família GR Design! Seus dados ficarão
+          disponíveis para facilitar seus próximos pedidos e você ainda poderá
+          aproveitar benefícios especiais. Da próxima vez, é só informar seu
+          WhatsApp para acessar seu cadastro em qualquer aparelho.
+        </p>
+      </div>
+    );
   }
 
   return (

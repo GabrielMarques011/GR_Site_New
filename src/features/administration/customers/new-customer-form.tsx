@@ -12,7 +12,6 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { RecoveryCodeBox } from "@/features/customers/recovery-code-box";
 import { maskBrazilianPhone } from "@/lib/utils/phone";
 import { fetchAddressByCep, maskCep } from "@/lib/utils/viacep";
 import {
@@ -82,7 +81,6 @@ export function NewCustomerForm() {
   const [success, setSuccess] = useState<{
     customerId: string;
     fullName: string;
-    recoveryCode: string;
   } | null>(null);
 
   const {
@@ -158,20 +156,10 @@ export function NewCustomerForm() {
             Cliente cadastrada com sucesso! 💜
           </h2>
           <p className="mt-2 text-ink-700">
-            Anote o código de recuperação abaixo e repasse para{" "}
-            {success.fullName}. Com ele e o WhatsApp cadastrado, ela consegue
-            acessar o próprio cadastro em qualquer aparelho, pela opção &quot;Já
+            {success.fullName} já pode acessar o próprio cadastro em qualquer
+            aparelho — basta informar o WhatsApp cadastrado na opção &quot;Já
             sou cliente GR Design&quot;.
           </p>
-        </div>
-
-        <div className="rounded-xl border border-ink-100 bg-white p-4">
-          <p className="text-sm font-medium text-ink-900">
-            Código de recuperação
-          </p>
-          <div className="mt-3">
-            <RecoveryCodeBox recoveryCode={success.recoveryCode} />
-          </div>
         </div>
 
         <div className="flex flex-wrap justify-center gap-3">

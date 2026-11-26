@@ -133,27 +133,36 @@ segurança é o mais cuidadoso do projeto:
 
 - **Nenhum SELECT/INSERT/UPDATE/DELETE público em `customers`,
   `customer_sessions` ou `customer_recovery_codes`.** Toda a interação
-  pública (cadastrar, reconhecer, recuperar em outro aparelho, gerar novo
-  código) passa por funções `SECURITY DEFINER` com `search_path` travado
-  (mesmo padrão de `is_admin()`/`count_orders_by_phone()`):
-  `register_customer`, `get_customer_session`, `recover_customer_session`,
-  `rotate_recovery_code`, `revoke_customer_session`. Nenhuma delas devolve
-  dados de um cliente a partir do telefone de outro — a busca é sempre por
-  hash de token de sessão (cookie) ou por telefone **+** hash do código de
-  recuperação, nunca um sozinho.
+  pública (cadastrar, reconhecer, entrar em outro aparelho) passa por
+  funções `SECURITY DEFINER` com `search_path` travado (mesmo padrão de
+  `is_admin()`/`count_orders_by_phone()`): `register_customer`,
+  `get_customer_session`, `login_customer_by_phone`,
+  `revoke_customer_session`.
 - **Sessão**: token aleatório de 256 bits gerado no servidor
   (`src/lib/customer-session.ts`), guardado em cookie `HttpOnly`,
   `Secure` em produção, `SameSite=Lax`, validade de 30 dias. Só o **hash**
   (SHA-256) do token fica em `customer_sessions.token_hash` — o valor em si
   nunca é persistido, só existe no cookie do navegador do cliente.
-- **Código de recuperação**: gerado uma única vez, mostrado ao cliente logo
-  após o cadastro (tela de sucesso) para ele copiar/guardar — nunca
-  reenviado automaticamente (o projeto não usa API de mensageria do
-  WhatsApp). Só o hash fica no banco. `recover_customer_session()` limita
-  tentativas (5) com intervalo de 15 minutos, e sempre devolve o mesmo erro
-  genérico ("telefone ou código inválidos") tanto para telefone inexistente
-  quanto para código errado — evita que alguém descubra se um número está
-  cadastrado só testando combinações.
+- **Login em outro aparelho — só pelo WhatsApp (migration
+  `0007_phone_login.sql`), troca deliberada de segurança por
+  simplicidade, pedida explicitamente pelo dono do negócio**: o modelo
+  original (código de recuperação de uso único, mostrado uma vez após o
+  cadastro, exigido **junto com** o telefone para reconhecer o cadastro em
+  outro aparelho) foi avaliado como impraticável — clientes esqueceriam o
+  código, por mais curto que fosse. `login_customer_by_phone()` substitui
+  isso por uma busca direta: existe cadastro com aquele telefone? Se sim,
+  reconhece na hora; se não, avisa que não há cadastro. **Isso significa
+  que não há mais nenhuma verificação de posse do número** — qualquer
+  pessoa que souber o WhatsApp de alguém consegue "entrar" como essa pessoa
+  em qualquer aparelho (ver endereço, data de nascimento, usar o desconto
+  de primeira compra dela). É exatamente o oposto do requisito original
+  ("não permitir acesso aos dados de clientes apenas digitando um número de
+  WhatsApp"), mas foi um pedido explícito e repetido do dono do negócio,
+  que julgou a praticidade mais importante que esse risco para um negócio
+  pequeno. `customer_recovery_codes` e as funções
+  `recover_customer_session()`/`rotate_recovery_code()` continuam
+  existindo no banco (nada é apagado), só deixam de ser usadas pelo
+  código a partir desta migration.
 - **Benefício de primeira compra**: a reserva (`reserve_first_purchase_benefit`)
   é uma troca atômica `disponivel -> reservado` feita num único `UPDATE`
   com `WHERE status = 'disponivel'` — o próprio banco garante que duas
@@ -171,8 +180,8 @@ segurança é o mais cuidadoso do projeto:
   formato oficial `https://api.whatsapp.com/send/?phone=...&text=...`
   (nunca `wa.me` nesse fluxo administrativo) e o envio é sempre manual,
   clicado pela administradora dentro do próprio WhatsApp.
-  `whatsapp_message_logs` só registra que uma mensagem foi *preparada*
-  (link aberto) e, depois, que a administradora *confirmou manualmente* o
+  `whatsapp_message_logs` só registra que uma mensagem foi _preparada_
+  (link aberto) e, depois, que a administradora _confirmou manualmente_ o
   envio — o sistema nunca marca como enviada sozinho.
 
 ## `orders` — INSERT direto bloqueado por RLS sem causa identificada (migration `0005_fix_order_insert.sql`)

@@ -15,14 +15,20 @@
 - Temas sazonais (campanhas) com seção em destaque na home e painel de
   ativação com prazo de validade.
 - Cadastro e reconhecimento de clientes: cadastro simples sem login,
-  sessão persistente por dispositivo, recuperação em outro aparelho por
-  telefone + código, desconto de 5% na primeira compra com reserva
-  transacional, preenchimento automático no checkout, e painel completo de
-  gestão de clientes (indicadores, filtros, detalhes, benefício, mensagens
-  de WhatsApp preparadas/confirmadas manualmente).
+  sessão persistente por dispositivo, desconto de 5% na primeira compra
+  com reserva transacional, preenchimento automático no checkout, e painel
+  completo de gestão de clientes (indicadores, filtros, detalhes,
+  benefício, mensagens de WhatsApp preparadas/confirmadas manualmente).
 - Correção do registro de pedidos no histórico (o INSERT direto estava
   bloqueado por RLS sem causa identificada — ver SECURITY.md), confirmado
   com um pedido real salvo com o desconto de primeira compra aplicado.
+- Admins podem cadastrar clientes diretamente pelo painel
+  (`/administracao/clientes/novo`), para clientes que não têm/não querem
+  fazer o próprio cadastro.
+- Login em outro aparelho simplificado para apenas o WhatsApp cadastrado,
+  sem código de recuperação — troca deliberada de segurança por
+  simplicidade, pedida explicitamente pelo dono do negócio (ver
+  SECURITY.md).
 
 ## Pendente — depende de ação da proprietária/configuração externa
 

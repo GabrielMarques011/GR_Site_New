@@ -73,16 +73,11 @@ export type CustomerRegistrationValues = z.infer<
   typeof customerRegistrationSchema
 >;
 
-export const customerRecoverySchema = z.object({
+export const customerLoginSchema = z.object({
   phone: phoneField,
-  recovery_code: z
-    .string()
-    .trim()
-    .min(10, "Informe o código de recuperação")
-    .max(20, "Código inválido"),
 });
 
-export type CustomerRecoveryValues = z.infer<typeof customerRecoverySchema>;
+export type CustomerLoginValues = z.infer<typeof customerLoginSchema>;
 
 export const customerAdminUpdateSchema = z.object({
   full_name: z.string().trim().min(3, "Informe o nome completo").max(160),

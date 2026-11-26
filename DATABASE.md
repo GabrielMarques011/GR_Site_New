@@ -13,17 +13,17 @@
 
 ## Tabelas existentes (não criadas por este projeto)
 
-| Tabela           | Observação                                                                                                               |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `admin_profiles` | `user_id` (FK para `auth.users`), `name`, `role`, `created_at`                                                           |
-| `categories`     | `id`, `name`, `slug`, `description`, `image_url`, `display_order`, `active`, timestamps                                  |
-| `products`       | ver campos abaixo                                                                                                        |
-| `product_images` | `id`, `product_id`, `storage_path`, `image_url`, `alt_text`, `display_order`, `created_at`                               |
-| `store_settings` | `id`, `store_name`, `slogan`, `about_text`, `whatsapp`, `instagram_url`, `address`, `maps_url`, `logo_url`, `updated_at` |
-| `audit_logs`     | `id`, `user_id`, `action`, `entity`, `entity_id`, `details`, `created_at`                                                |
-| `orders`         | Criada pela migration `0002_orders.sql` — **aplicada** no Supabase; ver detalhes abaixo                                  |
-| `seasonal_campaigns` | Criada pela migration `0003_seasonal_campaigns.sql` — **aplicada** no Supabase; ver detalhes abaixo                   |
-| `customers`, `customer_sessions`, `customer_recovery_codes`, `customer_benefits`, `whatsapp_message_templates`, `whatsapp_message_logs` | Criadas pela migration `0004_customers.sql` — **aplicada** no Supabase; ver detalhes abaixo |
+| Tabela                                                                                                                                  | Observação                                                                                                                                                                                  |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `admin_profiles`                                                                                                                        | `user_id` (FK para `auth.users`), `name`, `role`, `created_at`                                                                                                                              |
+| `categories`                                                                                                                            | `id`, `name`, `slug`, `description`, `image_url`, `display_order`, `active`, timestamps                                                                                                     |
+| `products`                                                                                                                              | ver campos abaixo                                                                                                                                                                           |
+| `product_images`                                                                                                                        | `id`, `product_id`, `storage_path`, `image_url`, `alt_text`, `display_order`, `created_at`                                                                                                  |
+| `store_settings`                                                                                                                        | `id`, `store_name`, `slogan`, `about_text`, `whatsapp`, `instagram_url`, `address`, `maps_url`, `logo_url`, `updated_at`                                                                    |
+| `audit_logs`                                                                                                                            | `id`, `user_id`, `action`, `entity`, `entity_id`, `details`, `created_at`                                                                                                                   |
+| `orders`                                                                                                                                | Criada pela migration `0002_orders.sql` — **aplicada** no Supabase; ver detalhes abaixo                                                                                                     |
+| `seasonal_campaigns`                                                                                                                    | Criada pela migration `0003_seasonal_campaigns.sql` — **aplicada** no Supabase; ver detalhes abaixo                                                                                         |
+| `customers`, `customer_sessions`, `customer_recovery_codes`, `customer_benefits`, `whatsapp_message_templates`, `whatsapp_message_logs` | Criadas pela migration `0004_customers.sql` — **aplicada** no Supabase; ver detalhes abaixo. `customer_recovery_codes` segue existindo mas sem uso desde a migration `0007_phone_login.sql` |
 
 Campos de `products`: `id`, `category_id`, `campaign_id` (adicionado pela
 migration `0003_seasonal_campaigns.sql`), `name`, `slug`, `description`,
@@ -105,9 +105,10 @@ temas fixos, que só podem ser desativados, nunca excluídos), `display_order`,
   clientes: `customers` (dados pessoais e endereço, sem login/senha/e-mail),
   `customer_sessions` (sessão persistente por dispositivo, só o hash do
   token é gravado), `customer_recovery_codes` (código mostrado uma vez após
-  o cadastro, usado para recuperar o cadastro em outro aparelho — nunca
-  enviado automaticamente, pois o projeto não usa API de mensageria),
-  `customer_benefits` (desconto de 5% na primeira compra, com reserva
+  o cadastro, pensado originalmente para recuperar o cadastro em outro
+  aparelho — **substituído pela migration `0007_phone_login.sql`, ver
+  abaixo**; a tabela e as funções que a usavam continuam existindo, só
+  ficaram sem uso), `customer_benefits` (desconto de 5% na primeira compra, com reserva
   transacional ligada a um pedido), `whatsapp_message_templates` (boas-
   vindas/aniversário/primeira compra, editáveis no painel) e
   `whatsapp_message_logs` (registro manual de mensagem preparada →
@@ -131,6 +132,23 @@ temas fixos, que só podem ser desativados, nunca excluídos), `display_order`,
   sucesso na migration `0004_customers.sql`. **Status: aplicada no
   Supabase** — confirmado com um pedido real salvo com o desconto de
   primeira compra corretamente aplicado.
+- `0006_admin_create_customer.sql` — permite que administradoras cadastrem
+  clientes direto pelo painel (`/administracao/clientes/novo`), para
+  clientes que não têm ou não querem fazer o próprio cadastro. Função
+  `admin_create_customer()`, `SECURITY DEFINER`, mesmo padrão das demais —
+  só executa se `is_admin()` for verdadeiro. **Status: aplicada no
+  Supabase.**
+- `0007_phone_login.sql` — simplifica o reconhecimento em outro aparelho:
+  em vez do código de recuperação (`customer_recovery_codes`), o cliente
+  "entra" só informando o WhatsApp já cadastrado (`login_customer_by_phone`).
+  Pedido explícito do dono do negócio, trocando segurança por simplicidade
+  — ver SECURITY.md para o detalhe do risco aceito. Também remove o
+  parâmetro de código de recuperação de `register_customer` e
+  `admin_create_customer` (assinaturas antigas removidas com `drop function`
+  e recriadas sem esse parâmetro). **Status: proposta, ainda não confirmada
+  como aplicada.** `customer_recovery_codes` e as funções
+  `recover_customer_session()`/`rotate_recovery_code()` continuam existindo
+  no banco (nada destrutivo), só deixam de ser usadas pelo código.
 
 Campos de `customers`: `id`, `full_name`, `phone`, `phone_normalized`
 (E.164, único), `birth_date`, `zip_code`, `street`, `number`, `complement`,
@@ -139,10 +157,11 @@ Campos de `customers`: `id`, `full_name`, `phone`, `phone_normalized`
 `first_purchase_discount_used_at`, timestamps. Nenhuma linha de
 `customers`/`customer_sessions`/`customer_recovery_codes` é lida ou escrita
 diretamente pelo cliente — todo o fluxo público passa pelas funções
-`register_customer`, `get_customer_session`, `recover_customer_session`,
-`rotate_recovery_code`, `revoke_customer_session` e
-`reserve_first_purchase_benefit` (todas `SECURITY DEFINER`, mesmo padrão de
-`is_admin()`/`count_orders_by_phone()`).
+`register_customer`, `get_customer_session`, `login_customer_by_phone`,
+`revoke_customer_session` e `reserve_first_purchase_benefit` (todas
+`SECURITY DEFINER`, mesmo padrão de `is_admin()`/`count_orders_by_phone()`).
+`recover_customer_session`/`rotate_recovery_code` seguem existindo mas sem
+uso desde a migration `0007_phone_login.sql`.
 
 ### Regra para novas migrations
 
