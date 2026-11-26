@@ -34,8 +34,11 @@ export const productFormSchema = z
         "Use apenas letras minúsculas, números e hífens",
       ),
     description: z.string().trim().max(5000).optional().or(z.literal("")),
-    category_id: z.string().uuid("Selecione uma categoria").nullable(),
-    campaign_id: z.string().uuid().nullable().optional(),
+    category_id: z.preprocess(
+      blankToNull,
+      z.string().uuid("Selecione uma categoria").nullable(),
+    ),
+    campaign_id: z.preprocess(blankToNull, z.string().uuid().nullable()),
     price: z.coerce.number().positive("O preço deve ser maior que zero"),
     promotional_price: optionalPositiveNumber,
     promotion_start: z.string().nullable().optional(),

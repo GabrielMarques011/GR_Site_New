@@ -205,7 +205,7 @@ export function ProductForm({
           <Select
             id="category_id"
             {...register("category_id")}
-            value={watch("category_id") ?? ""}
+            value={(watch("category_id") as string | null) ?? ""}
           >
             <option value="">Sem categoria</option>
             {categories.map((category) => (
@@ -230,7 +230,7 @@ export function ProductForm({
         <Select
           id="campaign_id"
           {...register("campaign_id")}
-          value={watch("campaign_id") ?? ""}
+          value={(watch("campaign_id") as string | null) ?? ""}
         >
           <option value="">Sem campanha</option>
           {campaigns.map((campaign) => (

@@ -13,6 +13,7 @@ import { getActiveCampaignsShowcase } from "@/services/campaigns";
 import { getActiveCategories } from "@/services/categories";
 import { getHomeShowcase } from "@/services/products";
 import { getPublicStoreSettings } from "@/services/settings";
+import { cn } from "@/lib/utils/cn";
 
 const DIFERENCIAIS = [
   {
@@ -94,10 +95,17 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {campaignShowcases.map(({ campaign, products }) => (
+      {campaignShowcases.map(({ campaign, products }, index) => (
         <section
           key={campaign.id}
-          className="border-y border-lilac-200 bg-lilac-50/60 py-10"
+          className={cn(
+            "bg-lilac-50/60 pb-10 pt-4 sm:pt-6",
+            // Na primeira seção, puxa o fundo para cima por cima do respiro
+            // do hero (reservado para o degradê do fundo terminar suave) —
+            // sem isso, o espaço em branco do hero somado ao da seção
+            // parece um vão sem motivo antes do conteúdo começar.
+            index === 0 && "-mt-24 sm:mt-0",
+          )}
         >
           <div className="container-page">
             <div className="mb-6 flex items-end justify-between">
