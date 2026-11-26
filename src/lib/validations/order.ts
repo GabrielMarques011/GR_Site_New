@@ -22,3 +22,7 @@ export const orderStatusValues = [
 ] as const;
 
 export const orderStatusSchema = z.enum(orderStatusValues);
+
+export const orderPaymentStatusValues = ["nao_pago", "pago"] as const;
+
+export const orderPaymentStatusSchema = z.enum(orderPaymentStatusValues);

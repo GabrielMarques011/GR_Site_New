@@ -6,9 +6,13 @@ import { Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/utils/currency";
-import type { Order, OrderStatus } from "@/types/domain";
+import type { Order, OrderPaymentStatus, OrderStatus } from "@/types/domain";
 
-import { updateOrderStatusAction } from "./actions";
+import {
+  updateOrderPaymentStatusAction,
+  updateOrderStatusAction,
+} from "./actions";
+import { ChargeSendButton } from "./charge-send-button";
 
 const STATUS_LABELS: Record<OrderStatus, string> = {
   em_andamento: "Em andamento",
@@ -20,6 +24,19 @@ const STATUS_VARIANTS: Record<OrderStatus, "warning" | "success" | "danger"> = {
   em_andamento: "warning",
   concluido: "success",
   recusado: "danger",
+};
+
+const PAYMENT_STATUS_LABELS: Record<OrderPaymentStatus, string> = {
+  nao_pago: "Não pago",
+  pago: "Pago",
+};
+
+const PAYMENT_STATUS_VARIANTS: Record<
+  OrderPaymentStatus,
+  "warning" | "success"
+> = {
+  nao_pago: "warning",
+  pago: "success",
 };
 
 const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
@@ -35,7 +52,7 @@ function formatPhoneDisplay(phone: string): string {
   return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
 }
 
-export function OrdersTable({ orders }: { orders: Order[] }) {
+export function PaymentsTable({ orders }: { orders: Order[] }) {
   const [pending, startTransition] = useTransition();
 
   const orderCountByPhone = useMemo(() => {
@@ -53,6 +70,15 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
     startTransition(() => updateOrderStatusAction(orderId, status));
   }
 
+  function handlePaymentStatusChange(
+    orderId: string,
+    paymentStatus: OrderPaymentStatus,
+  ) {
+    startTransition(() =>
+      updateOrderPaymentStatusAction(orderId, paymentStatus),
+    );
+  }
+
   if (orders.length === 0) {
     return (
       <p className="py-10 text-center text-ink-500">
@@ -66,6 +92,7 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
       {orders.map((order) => {
         const totalFromThisCustomer =
           orderCountByPhone.get(order.customer_phone) ?? 1;
+        const paymentStatus = order.payment_status ?? "nao_pago";
 
         return (
           <div
@@ -96,24 +123,47 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                 </p>
               </div>
 
-              <Select
-                value={order.status}
-                disabled={pending}
-                onChange={(event) =>
-                  handleStatusChange(
-                    order.id,
-                    event.target.value as OrderStatus,
-                  )
-                }
-                className="w-40"
-                aria-label={`Status do pedido de ${order.customer_name}`}
-              >
-                {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </Select>
+              <div className="flex flex-wrap items-center gap-2">
+                <Select
+                  value={order.status}
+                  disabled={pending}
+                  onChange={(event) =>
+                    handleStatusChange(
+                      order.id,
+                      event.target.value as OrderStatus,
+                    )
+                  }
+                  className="w-40"
+                  aria-label={`Status do pedido de ${order.customer_name}`}
+                >
+                  {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </Select>
+
+                <Select
+                  value={paymentStatus}
+                  disabled={pending}
+                  onChange={(event) =>
+                    handlePaymentStatusChange(
+                      order.id,
+                      event.target.value as OrderPaymentStatus,
+                    )
+                  }
+                  className="w-32"
+                  aria-label={`Pagamento do pedido de ${order.customer_name}`}
+                >
+                  {Object.entries(PAYMENT_STATUS_LABELS).map(
+                    ([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ),
+                  )}
+                </Select>
+              </div>
             </div>
 
             <ul className="mt-3 space-y-1 border-t border-ink-100 pt-3 text-sm text-ink-700">
@@ -128,9 +178,14 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
             </ul>
 
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-ink-100 pt-3">
-              <Badge variant={STATUS_VARIANTS[order.status]}>
-                {STATUS_LABELS[order.status]}
-              </Badge>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={STATUS_VARIANTS[order.status]}>
+                  {STATUS_LABELS[order.status]}
+                </Badge>
+                <Badge variant={PAYMENT_STATUS_VARIANTS[paymentStatus]}>
+                  {PAYMENT_STATUS_LABELS[paymentStatus]}
+                </Badge>
+              </div>
               <div className="text-right text-sm">
                 {order.discount_percent > 0 && (
                   <p className="text-ink-500">
@@ -143,6 +198,17 @@ export function OrdersTable({ orders }: { orders: Order[] }) {
                 </p>
               </div>
             </div>
+
+            {paymentStatus === "nao_pago" && (
+              <div className="mt-3 border-t border-ink-100 pt-3">
+                <ChargeSendButton
+                  orderId={order.id}
+                  customerName={order.customer_name}
+                  customerPhone={order.customer_phone}
+                  total={order.total}
+                />
+              </div>
+            )}
           </div>
         );
       })}

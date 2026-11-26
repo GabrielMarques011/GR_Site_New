@@ -29,6 +29,12 @@
   sem código de recuperação — troca deliberada de segurança por
   simplicidade, pedida explicitamente pelo dono do negócio (ver
   SECURITY.md).
+- Checkout dispensa nome e WhatsApp para cliente reconhecido (cadastro ou
+  login) — só confirma os dados já identificados.
+- Controle de pagamento por pedido: tela `/administracao/pagamentos`
+  (pago/não pago, trocar status, botão de cobrança pelo WhatsApp com
+  confirmação manual) e `/administracao/historico` virou um dashboard de
+  vendas (indicadores, vendas concluídas por mês, proporção de pagamentos).
 
 ## Pendente — depende de ação da proprietária/configuração externa
 

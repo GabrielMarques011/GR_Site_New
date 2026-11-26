@@ -24,6 +24,7 @@
 | `orders`                                                                                                                                | Criada pela migration `0002_orders.sql` — **aplicada** no Supabase; ver detalhes abaixo                                                                                                     |
 | `seasonal_campaigns`                                                                                                                    | Criada pela migration `0003_seasonal_campaigns.sql` — **aplicada** no Supabase; ver detalhes abaixo                                                                                         |
 | `customers`, `customer_sessions`, `customer_recovery_codes`, `customer_benefits`, `whatsapp_message_templates`, `whatsapp_message_logs` | Criadas pela migration `0004_customers.sql` — **aplicada** no Supabase; ver detalhes abaixo. `customer_recovery_codes` segue existindo mas sem uso desde a migration `0007_phone_login.sql` |
+| `order_charge_logs`                                                                                                                     | Criada pela migration `0008_order_payments.sql` — **aplicada** no Supabase; ver detalhes abaixo                                                                                             |
 
 Campos de `products`: `id`, `category_id`, `campaign_id` (adicionado pela
 migration `0003_seasonal_campaigns.sql`), `name`, `slug`, `description`,
@@ -82,7 +83,9 @@ cada uma abaixo reflete o que foi confirmado até agora.
 Campos de `orders`: `id`, `customer_name`, `customer_phone`, `items`
 (jsonb — lista de `{product_id, name, quantity, unit_price, subtotal, note?}`),
 `subtotal`, `discount_percent`, `total`, `is_first_purchase`, `status`
-(`em_andamento` | `concluido` | `recusado`), `created_at`, `updated_at`.
+(`em_andamento` | `concluido` | `recusado`), `payment_status`
+(`nao_pago` | `pago`, adicionado pela migration `0008_order_payments.sql`),
+`payment_confirmed_at`, `created_at`, `updated_at`.
 
 - `0003_seasonal_campaigns.sql` — cria a tabela `seasonal_campaigns` (os
   temas sazonais ligáveis/desligáveis no painel: Natal, Dia das Mães, Volta
@@ -145,10 +148,20 @@ temas fixos, que só podem ser desativados, nunca excluídos), `display_order`,
   — ver SECURITY.md para o detalhe do risco aceito. Também remove o
   parâmetro de código de recuperação de `register_customer` e
   `admin_create_customer` (assinaturas antigas removidas com `drop function`
-  e recriadas sem esse parâmetro). **Status: proposta, ainda não confirmada
-  como aplicada.** `customer_recovery_codes` e as funções
+  e recriadas sem esse parâmetro). **Status: aplicada no Supabase.**
+  `customer_recovery_codes` e as funções
   `recover_customer_session()`/`rotate_recovery_code()` continuam existindo
   no banco (nada destrutivo), só deixam de ser usadas pelo código.
+- `0008_order_payments.sql` — controle de pagamento por pedido, para a
+  tela `/administracao/pagamentos`: coluna `orders.payment_status`
+  (`nao_pago` | `pago`, todo pedido nasce não pago) e `payment_confirmed_at`,
+  mais a tabela `order_charge_logs` (preparada → enviada manualmente →
+  cancelada, mesmo padrão de `whatsapp_message_logs`, mas ligada ao pedido,
+  não ao cliente, para funcionar mesmo em pedidos sem cadastro vinculado).
+  Status de pagamento é alterado por `UPDATE` direto (como `status` do
+  pedido), não por função — sempre feito por uma admin autenticada,
+  já coberto pela policy `orders_admin_update` existente.
+  **Status: aplicada no Supabase.**
 
 Campos de `customers`: `id`, `full_name`, `phone`, `phone_normalized`
 (E.164, único), `birth_date`, `zip_code`, `street`, `number`, `complement`,

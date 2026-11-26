@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 import { Alert } from "@/components/ui/alert";
-import { OrdersTable } from "@/features/administration/orders/orders-table";
+import { computeOrderStats } from "@/features/administration/orders/order-stats";
+import { SalesDashboard } from "@/features/administration/orders/sales-dashboard";
 import { getOrders } from "@/services/orders";
 import type { Order } from "@/types/domain";
 
@@ -17,13 +18,16 @@ export default async function AdminHistoricoPage() {
     loadError = error instanceof Error ? error.message : "Erro desconhecido";
   }
 
+  const stats = computeOrderStats(orders);
+
   return (
     <div>
       <h1 className="font-display text-2xl font-semibold text-ink-900">
-        Histórico de pedidos
+        Histórico de vendas
       </h1>
       <p className="mt-1 text-sm text-ink-500">
-        {orders.length} pedido(s) recebido(s) pelo WhatsApp
+        Visão geral dos pedidos recebidos pelo WhatsApp. Para mudar status ou
+        cobrar um cliente, use a tela Pagamentos.
       </p>
 
       <div className="mt-6">
@@ -34,7 +38,7 @@ export default async function AdminHistoricoPage() {
             por isso — peça para aplicá-la e recarregue a página.
           </Alert>
         ) : (
-          <OrdersTable orders={orders} />
+          <SalesDashboard stats={stats} />
         )}
       </div>
     </div>

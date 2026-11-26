@@ -99,6 +99,7 @@ export type AuditLogRow = {
 };
 
 export type OrderStatus = "em_andamento" | "concluido" | "recusado";
+export type OrderPaymentStatus = "nao_pago" | "pago";
 
 export type OrderItemSnapshot = {
   product_id: string;
@@ -120,8 +121,23 @@ export type OrderRow = {
   total: number;
   is_first_purchase: boolean;
   status: OrderStatus;
+  payment_status: OrderPaymentStatus;
+  payment_confirmed_at: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type OrderChargeLogStatus =
+  "preparada" | "enviada_manualmente" | "cancelada";
+
+export type OrderChargeLogRow = {
+  id: string;
+  order_id: string;
+  status: OrderChargeLogStatus;
+  prepared_at: string;
+  manually_confirmed_at: string | null;
+  administrator_id: string | null;
+  created_at: string;
 };
 
 export type CustomerRow = {
@@ -254,6 +270,12 @@ export type Database = {
           total: number;
         };
         Update: Partial<OrderRow>;
+        Relationships: [];
+      };
+      order_charge_logs: {
+        Row: OrderChargeLogRow;
+        Insert: Partial<OrderChargeLogRow> & { order_id: string };
+        Update: Partial<OrderChargeLogRow>;
         Relationships: [];
       };
       seasonal_campaigns: {

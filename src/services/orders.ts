@@ -1,7 +1,11 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import type { OrderItemSnapshot, OrderStatus } from "@/types/database";
+import type {
+  OrderItemSnapshot,
+  OrderPaymentStatus,
+  OrderStatus,
+} from "@/types/database";
 import type { Order } from "@/types/domain";
 
 function normalizePhone(phone: string): string {
@@ -125,5 +129,27 @@ export async function updateOrderStatus(
 
   if (error) {
     throw new Error(`Falha ao atualizar status do pedido: ${error.message}`);
+  }
+}
+
+export async function updateOrderPaymentStatus(
+  id: string,
+  paymentStatus: OrderPaymentStatus,
+): Promise<void> {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      payment_status: paymentStatus,
+      payment_confirmed_at:
+        paymentStatus === "pago" ? new Date().toISOString() : null,
+    })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(
+      `Falha ao atualizar status de pagamento do pedido: ${error.message}`,
+    );
   }
 }

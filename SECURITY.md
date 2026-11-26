@@ -109,6 +109,25 @@ desenho de RLS é mais cuidadoso que o das outras tabelas:
 - **UPDATE/DELETE só para administradoras** (mudar o status do pedido,
   ou remover um pedido de teste/spam).
 
+## Controle de pagamento e cobrança (migration `0008_order_payments.sql`)
+
+Tela `/administracao/pagamentos` — mesmo desenho de permissão de `orders`:
+
+- **`payment_status`/`payment_confirmed_at` só mudam por `UPDATE` direto,
+  feito por uma administradora autenticada** — já coberto pela policy
+  `orders_admin_update` existente (migration `0002_orders.sql`), sem
+  precisar de policy nova. Todo pedido nasce `nao_pago`; não existe
+  integração de pagamento nenhuma, é um controle 100% manual.
+- **`order_charge_logs`**: mesmo padrão de `whatsapp_message_logs`
+  (preparada → enviada manualmente → cancelada, nunca marcado como
+  enviado sozinho) — só que ligado a `order_id`, não a `customer_id`,
+  porque um pedido pode não ter cadastro de cliente vinculado e mesmo
+  assim precisa poder ser cobrado pelo telefone do checkout. Só
+  administradoras (`is_admin()`).
+- **Mensagem de cobrança**: mesmo formato de link administrativo já usado
+  para clientes (`api.whatsapp.com/send/`, nunca `wa.me`), envio sempre
+  manual — ver seção de mensagens pelo WhatsApp acima.
+
 ## `seasonal_campaigns` — temas sazonais (migration `0003_seasonal_campaigns.sql`)
 
 Mesmo desenho de RLS de `categories`/`products` (dado não sensível,

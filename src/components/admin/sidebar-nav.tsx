@@ -12,6 +12,7 @@ import {
   Settings,
   Sparkles,
   Users,
+  Wallet,
 } from "lucide-react";
 
 import { logoutAction } from "@/features/auth/actions";
@@ -32,6 +33,7 @@ const NAV_ITEMS = [
     icon: Sparkles,
   },
   { href: "/administracao/clientes", label: "Clientes", icon: Users },
+  { href: "/administracao/pagamentos", label: "Pagamentos", icon: Wallet },
   { href: "/administracao/historico", label: "Histórico", icon: History },
   {
     href: "/administracao/configuracoes",

@@ -4,7 +4,10 @@ import type {
   CustomerBenefitStatus,
   CustomerRow,
   CustomerWithBirthdayRow,
+  OrderChargeLogRow,
+  OrderChargeLogStatus,
   OrderItemSnapshot,
+  OrderPaymentStatus,
   OrderRow,
   OrderStatus,
   ProductImageRow,
@@ -22,6 +25,8 @@ export type {
   StoreSettingsRow,
   OrderItemSnapshot,
   OrderStatus,
+  OrderPaymentStatus,
+  OrderChargeLogStatus,
   CustomerBenefitStatus,
   WhatsAppMessageType,
   WhatsAppMessageTemplateType,
@@ -29,6 +34,7 @@ export type {
 };
 
 export type Order = OrderRow;
+export type OrderChargeLog = OrderChargeLogRow;
 
 export type Category = CategoryRow;
 export type ProductImage = ProductImageRow;
