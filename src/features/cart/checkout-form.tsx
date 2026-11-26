@@ -104,7 +104,7 @@ export function CheckoutForm({
         </h3>
         <p className="mt-0.5 text-sm text-ink-700">
           {recognizedCustomer
-            ? "Já preenchemos seus dados — confira antes de finalizar."
+            ? "Já identificamos você pelo seu cadastro — é só confirmar."
             : "Para finalizar, nos diga seu nome e WhatsApp."}
         </p>
       </div>
@@ -120,38 +120,49 @@ export function CheckoutForm({
         </Alert>
       )}
 
-      <Field
-        label="Nome"
-        htmlFor="checkout-name"
-        error={fieldErrors.name}
-        required
-      >
-        <Input
-          id="checkout-name"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder="Seu nome"
-          required
-        />
-      </Field>
+      {recognizedCustomer ? (
+        <div className="rounded-xl border border-ink-100 bg-white p-3 text-sm">
+          <p className="font-medium text-ink-900">
+            {recognizedCustomer.fullName}
+          </p>
+          <p className="text-ink-600">{recognizedCustomer.phone}</p>
+        </div>
+      ) : (
+        <>
+          <Field
+            label="Nome"
+            htmlFor="checkout-name"
+            error={fieldErrors.name}
+            required
+          >
+            <Input
+              id="checkout-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="Seu nome"
+              required
+            />
+          </Field>
 
-      <Field
-        label="WhatsApp"
-        htmlFor="checkout-phone"
-        error={fieldErrors.phone}
-        hint="Com DDD, ex: 11919335496"
-        required
-      >
-        <Input
-          id="checkout-phone"
-          value={phone}
-          onChange={(event) => setPhone(event.target.value)}
-          onBlur={handlePhoneBlur}
-          placeholder="11919335496"
-          inputMode="tel"
-          required
-        />
-      </Field>
+          <Field
+            label="WhatsApp"
+            htmlFor="checkout-phone"
+            error={fieldErrors.phone}
+            hint="Com DDD, ex: 11919335496"
+            required
+          >
+            <Input
+              id="checkout-phone"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              onBlur={handlePhoneBlur}
+              placeholder="11919335496"
+              inputMode="tel"
+              required
+            />
+          </Field>
+        </>
+      )}
 
       <div className="flex gap-3 pt-1">
         <Button
