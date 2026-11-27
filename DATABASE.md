@@ -25,6 +25,7 @@
 | `seasonal_campaigns`                                                                                                                    | Criada pela migration `0003_seasonal_campaigns.sql` — **aplicada** no Supabase; ver detalhes abaixo                                                                                         |
 | `customers`, `customer_sessions`, `customer_recovery_codes`, `customer_benefits`, `whatsapp_message_templates`, `whatsapp_message_logs` | Criadas pela migration `0004_customers.sql` — **aplicada** no Supabase; ver detalhes abaixo. `customer_recovery_codes` segue existindo mas sem uso desde a migration `0007_phone_login.sql` |
 | `order_charge_logs`                                                                                                                     | Criada pela migration `0008_order_payments.sql` — **aplicada** no Supabase; ver detalhes abaixo                                                                                             |
+| `suppliers`, `material_purchases`, `material_purchase_items`, `stock_movements`                                                         | Criadas pela migration `0009_material_purchases.sql` — ver detalhes abaixo                                                                                                                  |
 
 Campos de `products`: `id`, `category_id`, `campaign_id` (adicionado pela
 migration `0003_seasonal_campaigns.sql`), `name`, `slug`, `description`,
@@ -162,6 +163,23 @@ temas fixos, que só podem ser desativados, nunca excluídos), `display_order`,
   pedido), não por função — sempre feito por uma admin autenticada,
   já coberto pela policy `orders_admin_update` existente.
   **Status: aplicada no Supabase.**
+- `0009_material_purchases.sql` — módulo "Compra de Materiais"
+  (`/administracao/compras`): `suppliers` (fornecedores, cadastro mínimo:
+  nome), `material_purchases` (compra principal: categoria livre,
+  fornecedor, comprovante, total, status `ativa`/`cancelada`),
+  `material_purchase_items` (itens da compra: produto, quantidade, valor
+  unitário, subtotal) e `stock_movements` (ledger de entradas/estornos,
+  para auditoria). Três funções fazem tudo atômico (criar/editar/cancelar
+  uma compra + atualizar o estoque do produto na mesma transação —
+  supabase-js não tem transação multi-tabela pelo REST, então isso só é
+  seguro dentro de uma única função Postgres): `create_material_purchase()`,
+  `update_material_purchase()` (recalcula o estoque pela diferença entre
+  itens antigos e novos) e `cancel_material_purchase()` (reverte o estoque
+  de cada item; bloqueia com erro se o produto já tiver estoque insuficiente
+  para o estorno). Também cria o bucket de Storage **privado**
+  `purchase-receipts` (diferente do `products-images`, que é público) —
+  comprovante de compra é documento sensível, leitura só por URL assinada.
+  **Status: proposta, ainda não confirmada como aplicada.**
 
 Campos de `customers`: `id`, `full_name`, `phone`, `phone_normalized`
 (E.164, único), `birth_date`, `zip_code`, `street`, `number`, `complement`,

@@ -140,6 +140,60 @@ export type OrderChargeLogRow = {
   created_at: string;
 };
 
+export type MaterialPurchaseItemInput = {
+  product_id: string;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+};
+
+export type SupplierRow = {
+  id: string;
+  name: string;
+  created_at: string;
+};
+
+export type MaterialPurchaseStatus = "ativa" | "cancelada";
+
+export type MaterialPurchaseRow = {
+  id: string;
+  category: string;
+  supplier_id: string | null;
+  supplier_name_snapshot: string;
+  total_value: number;
+  receipt_path: string | null;
+  status: MaterialPurchaseStatus;
+  administrator_id: string | null;
+  cancelled_at: string | null;
+  cancelled_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MaterialPurchaseItemRow = {
+  id: string;
+  purchase_id: string;
+  product_id: string | null;
+  product_name_snapshot: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+  created_at: string;
+};
+
+export type StockMovementType = "entrada" | "estorno";
+
+export type StockMovementRow = {
+  id: string;
+  product_id: string | null;
+  product_name_snapshot: string;
+  type: StockMovementType;
+  quantity: number;
+  purchase_id: string | null;
+  administrator_id: string | null;
+  created_at: string;
+};
+
 export type CustomerRow = {
   id: string;
   full_name: string;
@@ -278,6 +332,43 @@ export type Database = {
         Update: Partial<OrderChargeLogRow>;
         Relationships: [];
       };
+      suppliers: {
+        Row: SupplierRow;
+        Insert: Partial<SupplierRow> & { name: string };
+        Update: Partial<SupplierRow>;
+        Relationships: [];
+      };
+      material_purchases: {
+        Row: MaterialPurchaseRow;
+        Insert: Partial<MaterialPurchaseRow> & {
+          category: string;
+          supplier_name_snapshot: string;
+        };
+        Update: Partial<MaterialPurchaseRow>;
+        Relationships: [];
+      };
+      material_purchase_items: {
+        Row: MaterialPurchaseItemRow;
+        Insert: Partial<MaterialPurchaseItemRow> & {
+          purchase_id: string;
+          product_name_snapshot: string;
+          quantity: number;
+          unit_price: number;
+          subtotal: number;
+        };
+        Update: Partial<MaterialPurchaseItemRow>;
+        Relationships: [];
+      };
+      stock_movements: {
+        Row: StockMovementRow;
+        Insert: Partial<StockMovementRow> & {
+          product_name_snapshot: string;
+          type: StockMovementType;
+          quantity: number;
+        };
+        Update: Partial<StockMovementRow>;
+        Relationships: [];
+      };
       seasonal_campaigns: {
         Row: SeasonalCampaignRow;
         Insert: Partial<SeasonalCampaignRow> & { slug: string; name: string };
@@ -341,6 +432,32 @@ export type Database = {
       count_orders_by_phone: {
         Args: { p_phone: string };
         Returns: number;
+      };
+      create_material_purchase: {
+        Args: {
+          p_category: string;
+          p_supplier_id: string | null;
+          p_supplier_name: string;
+          p_items: MaterialPurchaseItemInput[];
+          p_receipt_path: string | null;
+          p_administrator_id: string | null;
+        };
+        Returns: string;
+      };
+      update_material_purchase: {
+        Args: {
+          p_purchase_id: string;
+          p_category: string;
+          p_supplier_id: string | null;
+          p_supplier_name: string;
+          p_items: MaterialPurchaseItemInput[];
+          p_receipt_path: string | null;
+        };
+        Returns: void;
+      };
+      cancel_material_purchase: {
+        Args: { p_purchase_id: string; p_administrator_id: string | null };
+        Returns: void;
       };
       register_customer: {
         Args: {

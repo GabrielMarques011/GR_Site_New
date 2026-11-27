@@ -10,6 +10,7 @@ import {
   Package,
   ScrollText,
   Settings,
+  ShoppingBasket,
   Sparkles,
   Users,
   Wallet,
@@ -26,6 +27,11 @@ const NAV_ITEMS = [
     exact: true,
   },
   { href: "/administracao/produtos", label: "Produtos", icon: Package },
+  {
+    href: "/administracao/compras",
+    label: "Compra de Materiais",
+    icon: ShoppingBasket,
+  },
   { href: "/administracao/categorias", label: "Categorias", icon: ListTree },
   {
     href: "/administracao/campanhas",

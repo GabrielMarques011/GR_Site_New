@@ -35,6 +35,12 @@
   (pago/não pago, trocar status, botão de cobrança pelo WhatsApp com
   confirmação manual) e `/administracao/historico` virou um dashboard de
   vendas (indicadores, vendas concluídas por mês, proporção de pagamentos).
+- Compra de Materiais (`/administracao/compras`): registrar compra com
+  vários itens, fornecedor com busca/criação automática, criar produto
+  rápido sem sair da tela, comprovante (PDF/imagem, bucket privado),
+  estoque atualizado automaticamente (soma na compra, recalcula na edição,
+  reverte no cancelamento — bloqueando estoque negativo), histórico com
+  busca/filtros e indicadores.
 
 ## Pendente — depende de ação da proprietária/configuração externa
 

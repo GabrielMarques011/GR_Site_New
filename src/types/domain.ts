@@ -4,6 +4,10 @@ import type {
   CustomerBenefitStatus,
   CustomerRow,
   CustomerWithBirthdayRow,
+  MaterialPurchaseItemInput,
+  MaterialPurchaseItemRow,
+  MaterialPurchaseRow,
+  MaterialPurchaseStatus,
   OrderChargeLogRow,
   OrderChargeLogStatus,
   OrderItemSnapshot,
@@ -13,7 +17,10 @@ import type {
   ProductImageRow,
   ProductRow,
   SeasonalCampaignRow,
+  StockMovementRow,
+  StockMovementType,
   StoreSettingsRow,
+  SupplierRow,
   WhatsAppMessageLogRow,
   WhatsAppMessageLogStatus,
   WhatsAppMessageTemplateRow,
@@ -28,6 +35,9 @@ export type {
   OrderPaymentStatus,
   OrderChargeLogStatus,
   CustomerBenefitStatus,
+  MaterialPurchaseStatus,
+  MaterialPurchaseItemInput,
+  StockMovementType,
   WhatsAppMessageType,
   WhatsAppMessageTemplateType,
   WhatsAppMessageLogStatus,
@@ -35,6 +45,15 @@ export type {
 
 export type Order = OrderRow;
 export type OrderChargeLog = OrderChargeLogRow;
+
+export type Supplier = SupplierRow;
+export type MaterialPurchase = MaterialPurchaseRow;
+export type MaterialPurchaseItem = MaterialPurchaseItemRow;
+export type StockMovement = StockMovementRow;
+
+export interface MaterialPurchaseWithItems extends MaterialPurchase {
+  items: MaterialPurchaseItem[];
+}
 
 export type Category = CategoryRow;
 export type ProductImage = ProductImageRow;

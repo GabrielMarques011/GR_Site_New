@@ -128,6 +128,52 @@ Tela `/administracao/pagamentos` — mesmo desenho de permissão de `orders`:
   para clientes (`api.whatsapp.com/send/`, nunca `wa.me`), envio sempre
   manual — ver seção de mensagens pelo WhatsApp acima.
 
+## Compra de Materiais (migration `0009_material_purchases.sql`)
+
+Tela `/administracao/compras` — 100% administrativo, sem nenhum acesso
+público em nenhuma das 4 tabelas (`suppliers`, `material_purchases`,
+`material_purchase_items`, `stock_movements`), todas `for all ... using
+(is_admin())`.
+
+- **Atualização de estoque sempre dentro de uma função Postgres, nunca em
+  passos separados do código**: `create_material_purchase()`,
+  `update_material_purchase()` e `cancel_material_purchase()` fazem
+  inserir/editar/cancelar a compra **e** somar/subtrair o estoque do
+  produto na mesma transação. supabase-js não oferece transação
+  multi-tabela pelo REST — uma função Postgres (uma chamada = uma
+  transação) é o único jeito de garantir que a compra nunca fique
+  registrada com o estoque só parcialmente atualizado (exatamente o
+  requisito "não deixar o estoque atualizado parcialmente" do briefing).
+  Não são `SECURITY DEFINER` (quem chama já é admin autenticada, coberta
+  pelas policies) — travam `search_path` mesmo assim, por consistência.
+- **Edição recalcula só a diferença**: `update_material_purchase()`
+  reverte todo o estoque que a compra havia somado antes de aplicar a
+  lista nova de itens, então editar uma quantidade nunca soma a
+  quantidade errada duas vezes.
+- **Cancelamento/estorno bloqueia estoque negativo**: `cancel_material_purchase()`
+  verifica, produto por produto, se o estoque atual já é menor que a
+  quantidade a reverter (sinal de que parte do material já foi
+  usada/vendida) — se for, a função levanta uma exceção com uma mensagem
+  clara em vez de deixar o estoque ficar negativo. Nunca é um `DELETE`: a
+  compra muda para `status = 'cancelada'` e o histórico original continua
+  intacto.
+- **Comprovante em bucket PRIVADO** (`purchase-receipts`, `public = false`)
+  — diferente do `products-images` (público, só para fotos de produto):
+  nota fiscal/comprovante é documento sensível. Leitura só por URL
+  assinada (`createSignedUrl`, validade de 10 minutos, gerada no
+  servidor), nunca uma URL pública direta. Upload restrito a
+  `receipts/%` e só para administradoras, mesmo padrão de
+  `products_images_admin_insert` (migration `0001_security_hardening.sql`).
+- **Fornecedor por nome, sem duplicar**: `resolveOrCreateSupplier()` busca
+  por nome (sem diferenciar maiúsculas/minúsculas) antes de criar um novo
+  — `suppliers.name` tem constraint `unique`, então mesmo uma corrida rara
+  entre duas inserções simultâneas não gera fornecedor duplicado.
+- **Produto criado rápido pela tela de compras nasce inativo**
+  (`products.active = false`) — entra no estoque correto, mas só fica
+  visível para clientes depois que a administradora revisar fotos/descrição
+  e ativar pela tela de Produtos normal (nenhuma mudança no fluxo de
+  publicação de produtos já existente).
+
 ## `seasonal_campaigns` — temas sazonais (migration `0003_seasonal_campaigns.sql`)
 
 Mesmo desenho de RLS de `categories`/`products` (dado não sensível,
