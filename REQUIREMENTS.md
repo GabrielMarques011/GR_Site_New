@@ -28,6 +28,20 @@ checklist de cobertura.
 | Desconto de 5% na primeira compra ligado ao cadastro (reserva transacional)                                                                                  | `src/services/customer-benefits.ts`, função `reserve_first_purchase_benefit()`                                       |
 | Preenchimento automático de nome/WhatsApp no checkout para cliente reconhecido                                                                               | `src/features/cart/checkout-form.tsx`                                                                                |
 
+## Módulo Loja (produtos de revenda/papelaria)
+
+| Requisito                                                                                                       | Onde                                                                                                                    |
+| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Segunda modalidade comercial, separada dos personalizados em toda tela/cálculo/relatório                        | Coluna `products.kind`/`categories.kind` (migration `0011_store_module.sql`), filtrada explicitamente em todo call site |
+| Link "Loja" na navegação, página própria com listagem, busca, filtro por categoria, ordenação, paginação        | `src/components/layout/header.tsx`, `src/app/(store)/loja/page.tsx`                                                     |
+| Página de produto da Loja (`/loja/[slug]`), mesma estrutura de galeria/preço/estoque/kits dos personalizados    | `src/components/store/product-detail-view.tsx` (compartilhado), `src/app/(store)/loja/[slug]/page.tsx`                  |
+| Categorias próprias da Loja, gerenciáveis pelo admin                                                            | aba "Loja" em `/administracao/categorias`                                                                               |
+| Subprodutos/kits reaproveitando a mesma implementação dos personalizados (não duplicada)                        | `product_options` (migration `0010`), sem nenhuma tabela/lógica nova                                                    |
+| Estoque com validação real e baixa automática ao concluir a venda, bloqueando se insuficiente                   | função `set_order_status()` (migration `0011_store_module.sql`), `src/features/cart/revalidate-cart.ts`                 |
+| Estorno automático do estoque se o pedido sair de "Concluído"                                                   | `set_order_status()` (mesma função, mesma transação)                                                                    |
+| Pedido preserva o preço/kind/tamanho do pacote do momento da compra (nunca recalcula com dado atual do produto) | `product_kind`/`units_per_package` em `orders.items` (jsonb, sem migration própria)                                     |
+| Identificação de vendas da Loja no painel de pagamentos, sem misturar com personalizados no mesmo pedido        | badge "Loja" por item em `payments-table.tsx`                                                                           |
+
 ## Painel administrativo
 
 | Requisito                                                                                                                                         | Onde                                                                                                                                   |
@@ -36,6 +50,7 @@ checklist de cobertura.
 | Proteção de rotas (middleware + checagem server-side)                                                                                             | `middleware.ts`, `src/app/administracao/(painel)/layout.tsx`                                                                           |
 | Dashboard com indicadores                                                                                                                         | `src/services/dashboard.ts`, `src/app/administracao/(painel)/page.tsx`                                                                 |
 | CRUD de produtos (nome, descrição, preço, promoção, categoria, SKU, estoque, destaque, ordem, ativo/inativo)                                      | `src/features/administration/products/*`                                                                                               |
+| "Produtos Loja": CRUD separado, busca por nome, filtro por categoria e disponibilidade — reaproveita o mesmo formulário/tabela dos personalizados | `src/app/administracao/(painel)/produtos-loja/**`, `store-products-filters.tsx`                                                        |
 | Subprodutos/kits por produto (nome, quantidade fixa, preço próprio) — cadastro, edição, exclusão, ativar/desativar                                | `src/features/administration/products/product-option-manager.tsx`, `new-product-options-picker.tsx`, `src/services/product-options.ts` |
 | CRUD de categorias (com tratamento de produtos ao excluir)                                                                                        | `src/features/administration/categories/*`, `services/categories.ts#deleteCategory`                                                    |
 | Upload de imagens (múltiplas, validação, WebP, sem órfãos no Storage)                                                                             | `src/services/product-images.ts`, `src/services/category-images.ts`                                                                    |

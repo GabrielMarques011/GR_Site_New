@@ -11,7 +11,7 @@ import { isChristmasSeason } from "@/features/seasonal/christmas/season";
 import { Snowfall } from "@/features/seasonal/christmas/snowfall";
 import { getActiveCampaignsShowcase } from "@/services/campaigns";
 import { getActiveCategories } from "@/services/categories";
-import { getHomeShowcase } from "@/services/products";
+import { getHomeShowcase, getPublicProducts } from "@/services/products";
 import { getPublicStoreSettings } from "@/services/settings";
 import { cn } from "@/lib/utils/cn";
 
@@ -40,11 +40,13 @@ export default async function HomePage() {
     categories,
     { homeProducts, promotional, heroImages },
     campaignShowcases,
+    { items: storeProducts },
   ] = await Promise.all([
     getPublicStoreSettings(),
     getActiveCategories(),
     getHomeShowcase({ homeProducts: 8, promotional: 8, heroImages: 6 }),
     getActiveCampaignsShowcase(),
+    getPublicProducts({ kind: "loja", featuredOnly: true, pageSize: 8 }),
   ]);
 
   const christmas = isChristmasSeason();
@@ -79,6 +81,15 @@ export default async function HomePage() {
                 })}
               >
                 Ver produtos
+              </Link>
+              <Link
+                href="/loja"
+                className={buttonVariants({
+                  size: "lg",
+                  variant: "secondary",
+                })}
+              >
+                Ver loja
               </Link>
               <Link
                 href="/contato"
@@ -150,6 +161,38 @@ export default async function HomePage() {
             {homeProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
+          </div>
+        </section>
+      )}
+
+      {storeProducts.length > 0 && (
+        <section className="bg-lilac-50/60 py-10">
+          <div className="container-page">
+            <div className="mb-6 flex items-end justify-between">
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wide text-lilac-700">
+                  Pronta entrega
+                </span>
+                <h2 className="font-display text-2xl font-semibold text-ink-900">
+                  Loja
+                </h2>
+              </div>
+              <Link
+                href="/loja"
+                className="text-sm font-medium text-lilac-700 hover:underline"
+              >
+                Ver todos
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {storeProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  basePath="/loja"
+                />
+              ))}
+            </div>
           </div>
         </section>
       )}

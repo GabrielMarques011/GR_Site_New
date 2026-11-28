@@ -48,6 +48,19 @@
   página do produto, carrinho/checkout/WhatsApp tratando cada opção como
   sua própria linha, com revalidação de preço no servidor antes de fechar
   o pedido.
+- Módulo Loja: segunda modalidade comercial (produtos de pronta entrega —
+  acessórios, papelaria etc.), separada dos personalizados em toda tela e
+  cálculo (`products`/`categories` ganham a coluna `kind`, em vez de
+  tabelas duplicadas). Página própria (`/loja`), link na navegação, CRUD
+  administrativo separado ("Produtos Loja", com busca/filtro por categoria
+  e disponibilidade) e categorias próprias — reaproveitando 100% do
+  formulário de produto, imagens, subprodutos/kits, promoções, carrinho e
+  checkout já existentes. Estoque passa a ter validação e baixa de verdade:
+  ao a administradora marcar um pedido como "Concluído", o estoque dos
+  itens da Loja é debitado (bloqueando se insuficiente) e estornado
+  automaticamente se o status voltar atrás — tudo na mesma transação
+  (`set_order_status()`). Pedidos 100% personalizados continuam sem
+  nenhuma mudança de comportamento.
 
 ## Pendente — depende de ação da proprietária/configuração externa
 

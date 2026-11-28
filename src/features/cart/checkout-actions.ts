@@ -111,6 +111,8 @@ export async function placeOrderAction(
         subtotal: item.unitPrice * item.quantity,
         note: item.note,
         product_option_id: item.optionId,
+        product_kind: item.kind,
+        units_per_package: item.packageSize,
       })),
       subtotal,
       discountPercent,

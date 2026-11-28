@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { updateCategoryAction } from "@/features/administration/categories/actions";
 import { CategoryForm } from "@/features/administration/categories/category-form";
-import { getAdminCategories } from "@/services/categories";
+import { getAdminCategoryById } from "@/services/categories";
 
 export const metadata: Metadata = { title: "Editar categoria" };
 
@@ -15,8 +15,7 @@ export default async function EditCategoryPage({
   params,
 }: EditCategoryPageProps) {
   const { id } = await params;
-  const categories = await getAdminCategories();
-  const category = categories.find((item) => item.id === id);
+  const category = await getAdminCategoryById(id);
 
   if (!category) {
     notFound();
@@ -35,7 +34,15 @@ export default async function EditCategoryPage({
       <p className="mt-1 text-sm text-ink-500">{category.name}</p>
 
       <div className="mt-6 max-w-xl rounded-2xl border border-ink-100 bg-white p-6">
-        <CategoryForm category={category} onSubmitAction={handleSubmit} />
+        <CategoryForm
+          category={category}
+          onSubmitAction={handleSubmit}
+          listPath={
+            category.kind === "loja"
+              ? "/administracao/categorias?segmento=loja"
+              : "/administracao/categorias"
+          }
+        />
       </div>
     </div>
   );

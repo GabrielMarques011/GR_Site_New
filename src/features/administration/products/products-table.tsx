@@ -12,7 +12,13 @@ import type { Product } from "@/types/domain";
 
 import { deleteProductAction, toggleProductActiveAction } from "./actions";
 
-export function ProductsTable({ products }: { products: Product[] }) {
+export function ProductsTable({
+  products,
+  basePath = "/administracao/produtos",
+}: {
+  products: Product[];
+  basePath?: string;
+}) {
   const [pending, startTransition] = useTransition();
 
   function handleToggle(id: string, active: boolean) {
@@ -95,7 +101,7 @@ export function ProductsTable({ products }: { products: Product[] }) {
               <td className="px-4 py-3">
                 <div className="flex justify-end gap-2">
                   <Link
-                    href={`/administracao/produtos/${product.id}`}
+                    href={`${basePath}/${product.id}`}
                     className="focus-ring flex size-8 items-center justify-center rounded-lg text-ink-700 hover:bg-ink-50"
                     aria-label="Editar produto"
                   >

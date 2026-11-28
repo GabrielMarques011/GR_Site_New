@@ -10,6 +10,7 @@ import {
   Package,
   ScrollText,
   Settings,
+  Store,
   ShoppingBasket,
   Sparkles,
   Users,
@@ -27,6 +28,11 @@ const NAV_ITEMS = [
     exact: true,
   },
   { href: "/administracao/produtos", label: "Produtos", icon: Package },
+  {
+    href: "/administracao/produtos-loja",
+    label: "Produtos Loja",
+    icon: Store,
+  },
   {
     href: "/administracao/compras",
     label: "Compra de Materiais",
@@ -74,7 +80,9 @@ export function AdminSidebarNav({
 
       <nav className="flex-1 space-y-1 p-3">
         {NAV_ITEMS.map(({ href, label, icon: Icon, exact }) => {
-          const active = exact ? pathname === href : pathname.startsWith(href);
+          const active = exact
+            ? pathname === href
+            : pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
               key={href}

@@ -11,6 +11,7 @@ import {
   updateCategory,
 } from "@/services/categories";
 import { uploadCategoryImage } from "@/services/category-images";
+import type { ProductKind } from "@/types/domain";
 
 export interface CategoryFormState {
   error: string | null;
@@ -31,9 +32,11 @@ function revalidateCategoryPaths() {
   revalidatePath("/administracao/categorias");
   revalidatePath("/categorias");
   revalidatePath("/produtos");
+  revalidatePath("/loja");
 }
 
 export async function createCategoryAction(
+  kind: ProductKind,
   _prevState: CategoryFormState,
   formData: FormData,
 ): Promise<CategoryFormState> {
@@ -51,7 +54,7 @@ export async function createCategoryAction(
     };
   }
 
-  const id = await createCategory(parsed.data);
+  const id = await createCategory(parsed.data, kind);
 
   // A categoria já existe neste ponto — se o upload da imagem falhar, o
   // erro é só registrado na auditoria, nunca bloqueia a criação. A imagem

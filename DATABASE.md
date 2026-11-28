@@ -27,10 +27,13 @@
 | `order_charge_logs`                                                                                                                     | Criada pela migration `0008_order_payments.sql` — **aplicada** no Supabase; ver detalhes abaixo                                                                                             |
 | `suppliers`, `material_purchases`, `material_purchase_items`, `stock_movements`                                                         | Criadas pela migration `0009_material_purchases.sql` — **aplicada** no Supabase; ver detalhes abaixo                                                                                        |
 | `product_options`                                                                                                                       | Criada pela migration `0010_product_options.sql` — ver detalhes abaixo                                                                                                                      |
+| `products.kind`, `categories.kind`                                                                                                      | Colunas adicionadas pela migration `0011_store_module.sql` — ver detalhes abaixo                                                                                                            |
 
 Campos de `products`: `id`, `category_id`, `campaign_id` (adicionado pela
-migration `0003_seasonal_campaigns.sql`), `name`, `slug`, `description`,
-`price`, `promotional_price`, `promotion_start`, `promotion_end`, `sku`,
+migration `0003_seasonal_campaigns.sql`), `kind` (adicionado pela migration
+`0011_store_module.sql` — `'personalizado' | 'loja'`, default
+`'personalizado'`), `name`, `slug`, `description`, `price`,
+`promotional_price`, `promotion_start`, `promotion_end`, `sku`,
 `stock_quantity`, `featured`, `active`, `display_order`, `created_at`,
 `updated_at`.
 
@@ -197,7 +200,32 @@ temas fixos, que só podem ser desativados, nunca excluídos), `display_order`,
   `orders.items`, que é `jsonb` — não precisa de migration própria), só
   para rastreio futuro; nome e preço já ficam congelados no próprio nome e
   valor do item, então mudar/excluir uma opção depois nunca altera pedidos
-  já feitos. **Status: proposta, ainda não confirmada como aplicada.**
+  já feitos. **Status: aplicada no Supabase.**
+- `0011_store_module.sql` — módulo "Loja" (segunda modalidade comercial,
+  produtos de pronta entrega vendidos ao lado dos personalizados). Em vez
+  de duplicar tabelas, `products` e `categories` ganham a coluna `kind`
+  (`'personalizado' | 'loja'`, default `'personalizado'` — nenhuma linha
+  existente muda) e reaproveitam 100% do CRUD, imagens, opções/kits,
+  promoções, carrinho e checkout já existentes. `stock_movements` ganha o
+  tipo `'saida'` (venda confirmada), ao lado de `'entrada'`/`'estorno'`, e
+  a coluna `order_id` (para rastrear qual pedido gerou a movimentação).
+  Nova função `set_order_status()` substitui o `UPDATE` direto do status do
+  pedido: ao entrar em `'concluido'`, debita o estoque de cada item com
+  `product_kind = 'loja'` (campo novo e opcional em `orders.items`, jsonb —
+  não precisa de migration própria, gravado pela aplicação a partir desta
+  migration) na quantidade `quantity * units_per_package` (outro campo novo
+  do item, cópia do tamanho do pacote no momento da compra — nunca depende
+  de uma opção que pode ter sido editada/excluída depois); bloqueia com
+  erro se o estoque for insuficiente (verifica todos os itens antes de
+  debitar qualquer um). Ao sair de `'concluido'`, estorna o mesmo valor.
+  Pedidos sem nenhum item `'loja'` passam pela função sem nenhuma validação
+  nova — comportamento idêntico ao `UPDATE` direto de antes. Kits/opções da
+  Loja continuam usando um único estoque físico por produto: o campo já
+  existente `product_options.quantity` passa a também significar "quantas
+  unidades-base esse pacote consome" (ex: pacote de 10 folhas consome 10 do
+  estoque de folhas do produto principal) — estoque independente por opção
+  fica fora de escopo. **Status: proposta, ainda não confirmada como
+  aplicada.**
 
 Campos de `customers`: `id`, `full_name`, `phone`, `phone_normalized`
 (E.164, único), `birth_date`, `zip_code`, `street`, `number`, `complement`,

@@ -198,6 +198,39 @@ Mesmo desenho de RLS de `seasonal_campaigns` (dado comercial, não pessoal):
   preço mudou, o carrinho é corrigido ou o item removido, igual ao que já
   acontecia com o preço normal do produto.
 
+## Módulo Loja (migration `0011_store_module.sql`)
+
+- **Segmentação por coluna, não por tabela separada**: `products.kind` e
+  `categories.kind` (`'personalizado' | 'loja'`) reaproveitam as mesmas
+  policies de RLS já existentes (admin-all via `is_admin()`, leitura pública
+  só de `active = true`) — nenhuma policy nova foi necessária, porque `kind`
+  é só mais uma coluna da mesma linha, não uma permissão diferente. Toda
+  query do código passa `kind` explicitamente (nunca implícito), então um
+  produto da Loja nunca aparece em `/produtos` nem vice-versa — a separação
+  é garantida no código e reforçada pelo filtro em cada consulta, não só
+  pela UI.
+- **Baixa de estoque nunca em múltiplos passos**: `set_order_status()` é uma
+  única função Postgres (mesmo motivo de `create_material_purchase()` — o
+  supabase-js não tem transação multi-tabela pelo REST) que muda o status
+  do pedido E debita/estorna o estoque dos itens da Loja na mesma
+  transação. Verifica o estoque de **todos** os itens antes de debitar
+  qualquer um — nunca deixa um pedido debitado pela metade se outro item
+  bloquear por falta de estoque.
+- **Nunca debita estoque de um pedido 100% personalizado**: a função só
+  mexe em itens cujo snapshot (`product_kind`) diz `'loja'` — pedidos sem
+  nenhum item da Loja passam pela função com o mesmo efeito do `UPDATE`
+  direto de antes (nenhuma validação nova se aplica a eles).
+- **Baixa de estoque nunca depende de dados que podem mudar depois**: a
+  quantidade debitada vem do snapshot do item (`quantity *
+units_per_package`, gravado no pedido no momento da compra), nunca de uma
+  nova consulta a `product_options` — editar ou excluir uma opção depois
+  não altera a baixa de um pedido já concluído, e o estorno (ao reabrir o
+  pedido) sempre devolve exatamente o que foi debitado.
+- **Produtos sem `stock_quantity` continuam sem controle**: a convenção já
+  existente ("`null` = não controla estoque") se mantém — `set_order_status`
+  só debita/bloqueia/estorna quando o produto tem um número ali, igual ao
+  comportamento já usado pelo seletor de quantidade na loja.
+
 ## `seasonal_campaigns` — temas sazonais (migration `0003_seasonal_campaigns.sql`)
 
 Mesmo desenho de RLS de `categories`/`products` (dado não sensível,

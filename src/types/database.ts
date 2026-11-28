@@ -21,6 +21,8 @@ export type AdminProfileRow = {
   created_at: string;
 };
 
+export type ProductKind = "personalizado" | "loja";
+
 export type CategoryRow = {
   id: string;
   name: string;
@@ -29,6 +31,9 @@ export type CategoryRow = {
   image_url: string | null;
   display_order: number;
   active: boolean;
+  /** 'personalizado' (padrão) ou 'loja' — segmenta a categoria sem precisar
+   * de uma tabela separada (migration 0011). */
+  kind: ProductKind;
   created_at: string;
   updated_at: string;
 };
@@ -61,6 +66,10 @@ export type ProductRow = {
   featured: boolean;
   active: boolean;
   display_order: number;
+  /** 'personalizado' (padrão) ou 'loja' — segmenta o produto sem precisar de
+   * uma tabela separada (migration 0011). Nunca escolhido pelo formulário:
+   * fixado pela rota administrativa que cria/edita o produto. */
+  kind: ProductKind;
   created_at: string;
   updated_at: string;
 };
@@ -124,6 +133,17 @@ export type OrderItemSnapshot = {
    * recalculada depois: preserva o preço/nome exatos do momento da compra
    * mesmo que a opção seja editada ou excluída posteriormente. */
   product_option_id?: string | null;
+  /** 'personalizado' ou 'loja' no momento da compra — usado pelo painel para
+   * identificar vendas da lojinha e por `set_order_status` para decidir se
+   * baixa estoque, sem depender do produto ainda existir/ter o mesmo kind
+   * depois. */
+  product_kind?: ProductKind;
+  /** Quantas unidades físicas cada `quantity` representa no momento da
+   * compra (1 para avulso, ou a quantidade fixa da opção) — cópia de
+   * `CartItem.packageSize`, nunca recalculada depois: a baixa de estoque de
+   * um pedido antigo nunca deve depender de uma opção que já pode ter sido
+   * editada ou excluída. */
+  units_per_package?: number;
 };
 
 export type OrderRow = {
@@ -197,7 +217,7 @@ export type MaterialPurchaseItemRow = {
   created_at: string;
 };
 
-export type StockMovementType = "entrada" | "estorno";
+export type StockMovementType = "entrada" | "estorno" | "saida";
 
 export type StockMovementRow = {
   id: string;
@@ -206,6 +226,9 @@ export type StockMovementRow = {
   type: StockMovementType;
   quantity: number;
   purchase_id: string | null;
+  /** Pedido que originou a movimentação (venda 'saida' ou seu 'estorno') —
+   * `null` para movimentações de compra de materiais. */
+  order_id?: string | null;
   administrator_id: string | null;
   created_at: string;
 };
@@ -578,6 +601,14 @@ export type Database = {
           p_discount_percent: number;
           p_total: number;
           p_is_first_purchase: boolean;
+        };
+        Returns: undefined;
+      };
+      set_order_status: {
+        Args: {
+          p_order_id: string;
+          p_new_status: string;
+          p_administrator_id: string | null;
         };
         Returns: undefined;
       };

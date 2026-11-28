@@ -21,7 +21,8 @@ const ISSUE_LABELS: Record<CartIssue["type"], (issue: CartIssue) => string> = {
     `"${issue.name}" não está mais disponível e foi removido do carrinho.`,
   price_changed: (issue) =>
     `O preço de "${issue.name}" foi atualizado de ${formatCurrency(issue.previousPrice ?? 0)} para ${formatCurrency(issue.newPrice ?? 0)}.`,
-  quantity_adjusted: (issue) => `A quantidade de "${issue.name}" foi ajustada.`,
+  quantity_adjusted: (issue) =>
+    `Não há estoque suficiente de "${issue.name}" — a quantidade foi ajustada para ${issue.newQuantity}.`,
 };
 
 export function CartView({

@@ -23,7 +23,7 @@ export default async function EditProductPage({
     getAdminCampaigns(),
   ]);
 
-  if (!product) {
+  if (!product || product.kind !== "personalizado") {
     notFound();
   }
 

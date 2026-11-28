@@ -116,19 +116,29 @@ export async function getOrders(): Promise<Order[]> {
   return (data ?? []) as unknown as Order[];
 }
 
+/**
+ * Muda o status do pedido via `set_order_status()` (migration 0011), não
+ * por UPDATE direto: só essa função consegue, na mesma transação, debitar
+ * (ao concluir) ou estornar (ao sair de "concluído") o estoque dos itens da
+ * Loja — e bloquear a mudança se faltar estoque. Pedidos sem nenhum item de
+ * loja passam por ela sem nenhum efeito colateral (equivalente ao UPDATE
+ * direto de antes).
+ */
 export async function updateOrderStatus(
   id: string,
   status: OrderStatus,
+  administratorId: string | null,
 ): Promise<void> {
   const supabase = await createClient();
 
-  const { error } = await supabase
-    .from("orders")
-    .update({ status })
-    .eq("id", id);
+  const { error } = await supabase.rpc("set_order_status", {
+    p_order_id: id,
+    p_new_status: status,
+    p_administrator_id: administratorId,
+  });
 
   if (error) {
-    throw new Error(`Falha ao atualizar status do pedido: ${error.message}`);
+    throw new Error(error.message);
   }
 }
 

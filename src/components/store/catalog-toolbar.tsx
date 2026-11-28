@@ -15,7 +15,13 @@ const SORT_OPTIONS: { value: string; label: string }[] = [
   { value: "price_desc", label: "Maior preço" },
 ];
 
-export function CatalogToolbar({ categories }: { categories: Category[] }) {
+export function CatalogToolbar({
+  categories,
+  basePath = "/produtos",
+}: {
+  categories: Category[];
+  basePath?: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("busca") ?? "");
@@ -28,7 +34,7 @@ export function CatalogToolbar({ categories }: { categories: Category[] }) {
       params.delete(key);
     }
     params.delete("pagina");
-    router.push(`/produtos?${params.toString()}`);
+    router.push(`${basePath}?${params.toString()}`);
   }
 
   return (

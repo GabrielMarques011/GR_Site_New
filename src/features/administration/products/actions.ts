@@ -22,6 +22,7 @@ import {
   setProductOptionActive,
   updateProductOption,
 } from "@/services/product-options";
+import type { ProductKind } from "@/types/domain";
 
 export interface ProductFormState {
   error: string | null;
@@ -53,11 +54,14 @@ function parseProductForm(formData: FormData) {
 function revalidateProductPaths() {
   revalidatePath("/administracao/produtos");
   revalidatePath("/produtos");
+  revalidatePath("/administracao/produtos-loja");
+  revalidatePath("/loja");
 }
 
 export async function createProductAction(
   _prevState: ProductFormState,
   formData: FormData,
+  kind: ProductKind = "personalizado",
 ): Promise<ProductFormState> {
   const parsed = parseProductForm(formData);
 
@@ -73,7 +77,7 @@ export async function createProductAction(
     };
   }
 
-  const id = await createProduct(parsed.data);
+  const id = await createProduct(parsed.data, kind);
 
   // O produto já existe neste ponto — se alguma imagem falhar ao enviar,
   // o erro não deve impedir a criação. As imagens que derem certo já ficam
@@ -127,6 +131,7 @@ export async function updateProductAction(
   productId: string,
   _prevState: ProductFormState,
   formData: FormData,
+  kind: ProductKind = "personalizado",
 ): Promise<ProductFormState> {
   const parsed = parseProductForm(formData);
 
@@ -148,7 +153,11 @@ export async function updateProductAction(
   });
 
   revalidateProductPaths();
-  revalidatePath(`/produtos/${parsed.data.slug}`);
+  revalidatePath(
+    kind === "loja"
+      ? `/loja/${parsed.data.slug}`
+      : `/produtos/${parsed.data.slug}`,
+  );
   return { error: null };
 }
 

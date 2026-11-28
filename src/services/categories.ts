@@ -2,18 +2,21 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import type { CategoryFormValues } from "@/lib/validations/category";
-import type { Category } from "@/types/domain";
+import type { Category, ProductKind } from "@/types/domain";
 
 const CATEGORY_SELECT =
-  "id, name, slug, description, image_url, display_order, active, created_at, updated_at";
+  "id, name, slug, description, image_url, display_order, active, kind, created_at, updated_at";
 
-export async function getActiveCategories(): Promise<Category[]> {
+export async function getActiveCategories(
+  kind: ProductKind = "personalizado",
+): Promise<Category[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("categories")
     .select(CATEGORY_SELECT)
     .eq("active", true)
+    .eq("kind", kind)
     .order("display_order", { ascending: true });
 
   if (error) {
@@ -25,6 +28,7 @@ export async function getActiveCategories(): Promise<Category[]> {
 
 export async function getCategoryBySlug(
   slug: string,
+  kind: ProductKind = "personalizado",
 ): Promise<Category | null> {
   const supabase = await createClient();
 
@@ -33,6 +37,7 @@ export async function getCategoryBySlug(
     .select(CATEGORY_SELECT)
     .eq("slug", slug)
     .eq("active", true)
+    .eq("kind", kind)
     .maybeSingle();
 
   if (error) {
@@ -42,12 +47,15 @@ export async function getCategoryBySlug(
   return data;
 }
 
-export async function getAdminCategories(): Promise<Category[]> {
+export async function getAdminCategories(
+  kind: ProductKind = "personalizado",
+): Promise<Category[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("categories")
     .select(CATEGORY_SELECT)
+    .eq("kind", kind)
     .order("display_order", { ascending: true });
 
   if (error) {
@@ -55,6 +63,27 @@ export async function getAdminCategories(): Promise<Category[]> {
   }
 
   return data ?? [];
+}
+
+/** Busca uma categoria por id independente do segmento — usada na tela de
+ * edição, que só recebe o id pela URL (não sabe de antemão se é
+ * personalizado ou loja). */
+export async function getAdminCategoryById(
+  id: string,
+): Promise<Category | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("categories")
+    .select(CATEGORY_SELECT)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Falha ao carregar categoria (admin): ${error.message}`);
+  }
+
+  return data;
 }
 
 export async function countProductsInCategory(
@@ -86,12 +115,13 @@ function toCategoryPayload(values: CategoryFormValues) {
 
 export async function createCategory(
   values: CategoryFormValues,
+  kind: ProductKind = "personalizado",
 ): Promise<string> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("categories")
-    .insert(toCategoryPayload(values))
+    .insert({ ...toCategoryPayload(values), kind })
     .select("id")
     .single();
 

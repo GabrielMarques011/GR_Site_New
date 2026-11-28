@@ -24,15 +24,31 @@ function revalidateOrderPaths() {
 export async function updateOrderStatusAction(
   orderId: string,
   status: OrderStatus,
-): Promise<void> {
+): Promise<{ error: string | null }> {
   const parsed = orderStatusSchema.safeParse(status);
-  if (!parsed.success) return;
+  if (!parsed.success) return { error: "Status inválido." };
 
-  await updateOrderStatus(orderId, parsed.data);
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    await updateOrderStatus(orderId, parsed.data, user?.id ?? null);
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error
+          ? error.message
+          : "Falha ao atualizar status do pedido.",
+    };
+  }
+
   await logAuditEvent("order.status_update", "orders", orderId, {
     status: parsed.data,
   });
   revalidateOrderPaths();
+  return { error: null };
 }
 
 export async function updateOrderPaymentStatusAction(

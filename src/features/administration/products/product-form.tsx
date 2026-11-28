@@ -74,6 +74,7 @@ export function ProductForm({
   campaigns,
   product,
   onSubmitAction,
+  listPath = "/administracao/produtos",
 }: {
   categories: Category[];
   campaigns: SeasonalCampaign[];
@@ -81,6 +82,9 @@ export function ProductForm({
   onSubmitAction: (
     formData: FormData,
   ) => Promise<{ error: string | null; fieldErrors?: Record<string, string> }>;
+  /** Para onde voltar depois de salvar — difere entre /produtos e
+   * /produtos-loja, já que este mesmo formulário atende os dois. */
+  listPath?: string;
 }) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -165,7 +169,7 @@ export function ProductForm({
         setServerError(result.error);
         return;
       }
-      router.push("/administracao/produtos");
+      router.push(listPath);
       router.refresh();
     });
   }

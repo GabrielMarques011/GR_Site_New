@@ -3,13 +3,13 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { computeProductPricing } from "@/features/promotions/pricing";
 import type { ProductFormValues } from "@/lib/validations/product";
-import type { Product, ProductFilters } from "@/types/domain";
+import type { Product, ProductFilters, ProductKind } from "@/types/domain";
 
 import { deleteAllProductImages } from "./product-images";
 import { getActiveProductOptions, getProductOptions } from "./product-options";
 
 const PRODUCT_FIELDS = `
-  id, category_id, name, slug, description, price, promotional_price,
+  id, category_id, kind, name, slug, description, price, promotional_price,
   promotion_start, promotion_end, sku, stock_quantity, featured, active,
   display_order, created_at, updated_at,
   images:product_images ( id, product_id, storage_path, image_url, alt_text, display_order, created_at )
@@ -39,20 +39,27 @@ export async function getPublicProducts(filters: ProductFilters = {}): Promise<{
   total: number;
 }> {
   const supabase = await createClient();
+  const kind = filters.kind ?? "personalizado";
 
   let query = filters.campaignSlug
     ? supabase
         .from("products")
         .select(PRODUCT_SELECT_CAMPAIGN_INNER)
         .eq("active", true)
+        .eq("kind", kind)
         .eq("campaign.slug", filters.campaignSlug)
     : filters.categorySlug
       ? supabase
           .from("products")
           .select(PRODUCT_SELECT_CATEGORY_INNER)
           .eq("active", true)
+          .eq("kind", kind)
           .eq("category.slug", filters.categorySlug)
-      : supabase.from("products").select(PRODUCT_SELECT).eq("active", true);
+      : supabase
+          .from("products")
+          .select(PRODUCT_SELECT)
+          .eq("active", true)
+          .eq("kind", kind);
 
   if (filters.search) {
     query = query.ilike("name", `%${filters.search}%`);
@@ -115,7 +122,10 @@ export async function getPublicProducts(filters: ProductFilters = {}): Promise<{
   return { items: paginated, total };
 }
 
-export async function getProductBySlug(slug: string): Promise<Product | null> {
+export async function getProductBySlug(
+  slug: string,
+  kind: ProductKind = "personalizado",
+): Promise<Product | null> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -123,6 +133,7 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     .select(PRODUCT_SELECT)
     .eq("slug", slug)
     .eq("active", true)
+    .eq("kind", kind)
     .maybeSingle();
 
   if (error) {
@@ -159,7 +170,10 @@ export async function getHomeShowcase(
     heroImages?: number;
   } = {},
 ): Promise<HomeShowcase> {
-  const { items: allActive } = await getPublicProducts({ pageSize: 100 });
+  const { items: allActive } = await getPublicProducts({
+    kind: "personalizado",
+    pageSize: 100,
+  });
 
   const homeProductsLimit = limits.homeProducts ?? 8;
   const featuredFirst = allActive.filter((product) => product.featured);
@@ -208,12 +222,15 @@ export async function getProductsByIds(ids: string[]): Promise<Product[]> {
 // Administração (requer sessão com role admin — reforçado por RLS no banco)
 // ---------------------------------------------------------------------------
 
-export async function getAdminProducts(): Promise<Product[]> {
+export async function getAdminProducts(
+  kind: ProductKind = "personalizado",
+): Promise<Product[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("products")
     .select(PRODUCT_SELECT)
+    .eq("kind", kind)
     .order("display_order", { ascending: true });
 
   if (error) {
@@ -285,9 +302,12 @@ function toProductPayload(values: ProductFormValues) {
 
 export async function createProduct(
   values: ProductFormValues,
+  kind: ProductKind = "personalizado",
 ): Promise<string> {
   const supabase = await createClient();
-  const payload = toProductPayload(values);
+  // `kind` nunca vem do formulário — é fixado pela rota administrativa que
+  // chama esta função (/produtos vs /produtos-loja) e nunca muda depois.
+  const payload = { ...toProductPayload(values), kind };
 
   const result = await supabase
     .from("products")

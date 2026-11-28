@@ -11,6 +11,9 @@ export interface CartIssue {
   type: "removed" | "price_changed" | "quantity_adjusted";
   previousPrice?: number;
   newPrice?: number;
+  /** Nova quantidade (de pacotes) após ajuste por falta de estoque —
+   * só preenchido para `type: "quantity_adjusted"`. */
+  newQuantity?: number;
 }
 
 export interface RevalidatedCart {
@@ -20,6 +23,41 @@ export interface RevalidatedCart {
 }
 
 const MAX_QUANTITY_PER_ITEM = 99;
+
+/**
+ * Checa o pedido contra o estoque atual do produto (só quando
+ * `stock_quantity` é controlado — `null` continua significando "sem
+ * controle", como já era antes da Loja existir). Devolve a quantidade de
+ * pacotes possível (nunca mais que a pedida) e, se precisou reduzir,
+ * registra o motivo em `issues`.
+ */
+function applyStockLimit(
+  issues: CartIssue[],
+  productId: string,
+  name: string,
+  requestedQuantity: number,
+  packageSize: number,
+  stockQuantity: number | null,
+): number {
+  if (stockQuantity == null) return requestedQuantity;
+
+  const maxPackages = Math.floor(stockQuantity / packageSize);
+
+  if (requestedQuantity <= maxPackages) return requestedQuantity;
+
+  if (maxPackages <= 0) {
+    issues.push({ productId, name, type: "removed" });
+    return 0;
+  }
+
+  issues.push({
+    productId,
+    name,
+    type: "quantity_adjusted",
+    newQuantity: maxPackages,
+  });
+  return maxPackages;
+}
 
 /**
  * Recalcula o carrinho a partir dos dados confiáveis do banco: produtos
@@ -88,13 +126,25 @@ export async function revalidateCart(
         });
       }
 
+      const itemName = `${product.name} — ${option.name}`;
+      const limitedQuantity = applyStockLimit(
+        issues,
+        product.id,
+        itemName,
+        quantity,
+        option.quantity,
+        product.stock_quantity,
+      );
+      if (limitedQuantity <= 0) continue;
+
       items.push({
         productId: product.id,
+        kind: product.kind,
         optionId: option.id,
-        name: `${product.name} — ${option.name}`,
+        name: itemName,
         slug: product.slug,
         unitPrice: option.price,
-        quantity,
+        quantity: limitedQuantity,
         packageSize: option.quantity,
         imageUrl: product.images[0]?.image_url ?? null,
         note: clientItem.note,
@@ -114,13 +164,24 @@ export async function revalidateCart(
       });
     }
 
+    const limitedQuantity = applyStockLimit(
+      issues,
+      product.id,
+      product.name,
+      quantity,
+      1,
+      product.stock_quantity,
+    );
+    if (limitedQuantity <= 0) continue;
+
     items.push({
       productId: product.id,
+      kind: product.kind,
       optionId: null,
       name: product.name,
       slug: product.slug,
       unitPrice: finalPrice,
-      quantity,
+      quantity: limitedQuantity,
       packageSize: 1,
       imageUrl: product.images[0]?.image_url ?? null,
       note: clientItem.note,

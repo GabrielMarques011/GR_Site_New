@@ -11,7 +11,13 @@ import type { Product } from "@/types/domain";
 
 import { PriceDisplay } from "./price-display";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({
+  product,
+  basePath = "/produtos",
+}: {
+  product: Product;
+  basePath?: string;
+}) {
   const cover = product.images[0];
   const hasCoverImage = isAllowedImageUrl(cover?.image_url);
   const { isPromotionActive } = computeProductPricing(product);
@@ -21,7 +27,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <div className="relative">
       <Link
-        href={`/produtos/${product.slug}`}
+        href={`${basePath}/${product.slug}`}
         className="focus-ring group flex h-full flex-col overflow-hidden rounded-2xl border border-ink-100 bg-white transition-shadow hover:shadow-md hover:shadow-ink-900/10"
       >
         <div className="relative aspect-square w-full overflow-hidden bg-lilac-50">

@@ -12,6 +12,7 @@ import type { PublicStoreSettings } from "@/types/domain";
 const NAV_LINKS = [
   { href: "/", label: "Início" },
   { href: "/produtos", label: "Produtos" },
+  { href: "/loja", label: "Loja" },
   { href: "/categorias", label: "Categorias" },
   { href: "/sobre", label: "Sobre nós" },
   { href: "/contato", label: "Contato" },

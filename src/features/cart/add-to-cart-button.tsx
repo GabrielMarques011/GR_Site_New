@@ -6,12 +6,13 @@ import { Check, Minus, Plus, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/cn";
-import type { ProductOption } from "@/types/domain";
+import type { ProductKind, ProductOption } from "@/types/domain";
 
 import { useCart } from "./cart-context";
 
 export function AddToCartButton({
   productId,
+  kind,
   name,
   slug,
   unitPrice,
@@ -20,6 +21,7 @@ export function AddToCartButton({
   options = [],
 }: {
   productId: string;
+  kind: ProductKind;
   name: string;
   slug: string;
   unitPrice: number;
@@ -63,6 +65,7 @@ export function AddToCartButton({
     addItem(
       {
         productId,
+        kind,
         optionId: selectedOption?.id ?? null,
         name: displayName,
         slug,

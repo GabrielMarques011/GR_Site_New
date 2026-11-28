@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { Sparkles } from "lucide-react";
 
+import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { formatCurrency } from "@/lib/utils/currency";
@@ -54,6 +55,7 @@ function formatPhoneDisplay(phone: string): string {
 
 export function PaymentsTable({ orders }: { orders: Order[] }) {
   const [pending, startTransition] = useTransition();
+  const [statusErrors, setStatusErrors] = useState<Record<string, string>>({});
 
   const orderCountByPhone = useMemo(() => {
     const counts = new Map<string, number>();
@@ -67,7 +69,16 @@ export function PaymentsTable({ orders }: { orders: Order[] }) {
   }, [orders]);
 
   function handleStatusChange(orderId: string, status: OrderStatus) {
-    startTransition(() => updateOrderStatusAction(orderId, status));
+    setStatusErrors((current) => ({ ...current, [orderId]: "" }));
+    startTransition(async () => {
+      const result = await updateOrderStatusAction(orderId, status);
+      if (result.error) {
+        setStatusErrors((current) => ({
+          ...current,
+          [orderId]: result.error!,
+        }));
+      }
+    });
   }
 
   function handlePaymentStatusChange(
@@ -166,11 +177,20 @@ export function PaymentsTable({ orders }: { orders: Order[] }) {
               </div>
             </div>
 
+            {statusErrors[order.id] && (
+              <Alert variant="danger" className="mt-3">
+                {statusErrors[order.id]}
+              </Alert>
+            )}
+
             <ul className="mt-3 space-y-1 border-t border-ink-100 pt-3 text-sm text-ink-700">
               {order.items.map((item, index) => (
                 <li key={index} className="flex justify-between gap-4">
-                  <span>
+                  <span className="flex items-center gap-2">
                     {item.quantity}x {item.name}
+                    {item.product_kind === "loja" && (
+                      <Badge variant="lilac">Loja</Badge>
+                    )}
                   </span>
                   <span>{formatCurrency(item.subtotal)}</span>
                 </li>

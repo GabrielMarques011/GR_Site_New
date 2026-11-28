@@ -40,11 +40,15 @@ function buildFormData(
 export function CategoryForm({
   category,
   onSubmitAction,
+  listPath = "/administracao/categorias",
 }: {
   category?: Category;
   onSubmitAction: (
     formData: FormData,
   ) => Promise<{ error: string | null; fieldErrors?: Record<string, string> }>;
+  /** Para onde voltar depois de salvar — leva de volta para a aba "Loja" ao
+   * criar/editar uma categoria da Loja. */
+  listPath?: string;
 }) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -94,7 +98,7 @@ export function CategoryForm({
         setServerError(result.error);
         return;
       }
-      router.push("/administracao/categorias");
+      router.push(listPath);
       router.refresh();
     });
   }

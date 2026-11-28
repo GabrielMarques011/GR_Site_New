@@ -15,6 +15,7 @@ import type {
   OrderRow,
   OrderStatus,
   ProductImageRow,
+  ProductKind,
   ProductOptionRow,
   ProductRow,
   SeasonalCampaignRow,
@@ -38,6 +39,7 @@ export type {
   CustomerBenefitStatus,
   MaterialPurchaseStatus,
   MaterialPurchaseItemInput,
+  ProductKind,
   StockMovementType,
   WhatsAppMessageType,
   WhatsAppMessageTemplateType,
@@ -93,6 +95,11 @@ export interface ProductPricing {
 
 export interface CartItem {
   productId: string;
+  /** 'personalizado' ou 'loja' — nunca decidido pelo cliente: vem sempre do
+   * produto buscado no servidor (página do produto ao adicionar,
+   * `revalidateCart` ao fechar o pedido). Usado só para identificação no
+   * histórico/baixa de estoque — a matemática do carrinho não depende disso. */
+  kind: ProductKind;
   /** Opção de compra (subproduto/kit) selecionada — `null` para compra
    * avulsa normal, por unidade. */
   optionId: string | null;
@@ -126,4 +133,7 @@ export interface ProductFilters {
   promotionsOnly?: boolean;
   page?: number;
   pageSize?: number;
+  /** 'personalizado' (padrão) ou 'loja' — segmenta qual catálogo a consulta
+   * enxerga. Sempre explícito em todo call site, nunca implícito. */
+  kind?: ProductKind;
 }
