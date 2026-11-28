@@ -25,13 +25,20 @@
 | `seasonal_campaigns`                                                                                                                    | Criada pela migration `0003_seasonal_campaigns.sql` — **aplicada** no Supabase; ver detalhes abaixo                                                                                         |
 | `customers`, `customer_sessions`, `customer_recovery_codes`, `customer_benefits`, `whatsapp_message_templates`, `whatsapp_message_logs` | Criadas pela migration `0004_customers.sql` — **aplicada** no Supabase; ver detalhes abaixo. `customer_recovery_codes` segue existindo mas sem uso desde a migration `0007_phone_login.sql` |
 | `order_charge_logs`                                                                                                                     | Criada pela migration `0008_order_payments.sql` — **aplicada** no Supabase; ver detalhes abaixo                                                                                             |
-| `suppliers`, `material_purchases`, `material_purchase_items`, `stock_movements`                                                         | Criadas pela migration `0009_material_purchases.sql` — ver detalhes abaixo                                                                                                                  |
+| `suppliers`, `material_purchases`, `material_purchase_items`, `stock_movements`                                                         | Criadas pela migration `0009_material_purchases.sql` — **aplicada** no Supabase; ver detalhes abaixo                                                                                        |
+| `product_options`                                                                                                                       | Criada pela migration `0010_product_options.sql` — ver detalhes abaixo                                                                                                                      |
 
 Campos de `products`: `id`, `category_id`, `campaign_id` (adicionado pela
 migration `0003_seasonal_campaigns.sql`), `name`, `slug`, `description`,
 `price`, `promotional_price`, `promotion_start`, `promotion_end`, `sku`,
 `stock_quantity`, `featured`, `active`, `display_order`, `created_at`,
 `updated_at`.
+
+Campos de `product_options`: `id`, `product_id`, `name`, `quantity`
+(inteiro, fixo), `price` (próprio, nunca `quantity × products.price`),
+`active`, `display_order`, timestamps. `on delete cascade` em `product_id`
+— excluir o produto já apaga as opções ligadas a ele, nunca deixa opção
+órfã.
 
 Funções existentes: `public.is_admin()`, `public.set_updated_at()` (+
 triggers de `updated_at`). RLS habilitado nas 6 tabelas, com políticas de
@@ -179,7 +186,18 @@ temas fixos, que só podem ser desativados, nunca excluídos), `display_order`,
   para o estorno). Também cria o bucket de Storage **privado**
   `purchase-receipts` (diferente do `products-images`, que é público) —
   comprovante de compra é documento sensível, leitura só por URL assinada.
-  **Status: proposta, ainda não confirmada como aplicada.**
+  **Status: aplicada no Supabase.**
+- `0010_product_options.sql` — "Subprodutos": opções de compra (kits,
+  pacotes) dentro de um mesmo produto, cada uma com quantidade fixa e
+  preço PRÓPRIO (nunca calculado a partir do preço unitário do produto).
+  Tabela `product_options` (`product_id`, `name`, `quantity`, `price`,
+  `active`, `display_order`). Leitura pública só das opções `active = true`
+  (mesmo padrão de `seasonal_campaigns`); administradoras veem todas. O
+  pedido grava `product_option_id` no item (campo novo e opcional em
+  `orders.items`, que é `jsonb` — não precisa de migration própria), só
+  para rastreio futuro; nome e preço já ficam congelados no próprio nome e
+  valor do item, então mudar/excluir uma opção depois nunca altera pedidos
+  já feitos. **Status: proposta, ainda não confirmada como aplicada.**
 
 Campos de `customers`: `id`, `full_name`, `phone`, `phone_normalized`
 (E.164, único), `birth_date`, `zip_code`, `street`, `number`, `complement`,

@@ -174,6 +174,30 @@ público em nenhuma das 4 tabelas (`suppliers`, `material_purchases`,
   e ativar pela tela de Produtos normal (nenhuma mudança no fluxo de
   publicação de produtos já existente).
 
+## Subprodutos / opções de compra (migration `0010_product_options.sql`)
+
+Mesmo desenho de RLS de `seasonal_campaigns` (dado comercial, não pessoal):
+
+- **Leitura pública só das opções `active = true`** — desativar uma opção
+  (sem excluir) já basta para ela parar de aparecer na loja, sem precisar
+  de filtro no código: quem decide é a RLS. Administradoras veem todas
+  (ativas e inativas), via `is_admin()`.
+- **Preço da opção nunca calculado a partir do preço do produto** — é uma
+  coluna própria (`price`), preenchida manualmente; o código nunca
+  multiplica `quantity × products.price` para chegar nele.
+- **Histórico financeiro nunca muda retroativamente**: o pedido grava o
+  nome já combinado (ex: "Lacinho — Kit 20 lacinhos") e o preço da opção
+  direto no item do pedido (`orders.items`, jsonb) no momento da compra —
+  editar o preço de uma opção depois, ou até excluí-la, não altera nenhum
+  pedido já feito. `product_options` tem `on delete cascade` em
+  `product_id` (some se o produto principal for excluído), mas isso nunca
+  reescreve pedidos antigos, só os dados de cadastro.
+- **Carrinho nunca confia no preço do kit vindo do navegador**:
+  `revalidateCart` sempre busca a opção de novo no banco (só as `active`)
+  antes de fechar o pedido — se a opção foi desativada, excluída, ou o
+  preço mudou, o carrinho é corrigido ou o item removido, igual ao que já
+  acontecia com o preço normal do produto.
+
 ## `seasonal_campaigns` — temas sazonais (migration `0003_seasonal_campaigns.sql`)
 
 Mesmo desenho de RLS de `categories`/`products` (dado não sensível,

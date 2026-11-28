@@ -6,6 +6,7 @@ import type { ProductFormValues } from "@/lib/validations/product";
 import type { Product, ProductFilters } from "@/types/domain";
 
 import { deleteAllProductImages } from "./product-images";
+import { getActiveProductOptions, getProductOptions } from "./product-options";
 
 const PRODUCT_FIELDS = `
   id, category_id, name, slug, description, price, promotional_price,
@@ -24,6 +25,12 @@ function sortImages(product: Product): Product {
     images: [...product.images].sort(
       (a, b) => a.display_order - b.display_order,
     ),
+    // As opções (subprodutos) não fazem parte do `PRODUCT_SELECT` — ver
+    // `getProductBySlug`/`getAdminProductById`, os dois únicos lugares que
+    // realmente precisam delas (a vitrine/listagem não mostra seletor de
+    // opção). Aqui só garante o valor padrão seguro para o resto das
+    // funções que reusam este helper.
+    options: product.options ?? [],
   };
 }
 
@@ -122,7 +129,11 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
     throw new Error(`Falha ao carregar produto: ${error.message}`);
   }
 
-  return data ? sortImages(data as unknown as Product) : null;
+  if (!data) return null;
+
+  const product = sortImages(data as unknown as Product);
+  product.options = await getActiveProductOptions(product.id);
+  return product;
 }
 
 export interface HomeShowcase {
@@ -228,6 +239,7 @@ export async function getAdminProductById(id: string): Promise<Product | null> {
   if (!data) return null;
 
   const product = sortImages(data as unknown as Product);
+  product.options = await getProductOptions(product.id);
 
   // campaign_id não faz parte do PRODUCT_SELECT (evita que toda listagem de
   // produtos dependa dessa coluna nova); buscado à parte, só para

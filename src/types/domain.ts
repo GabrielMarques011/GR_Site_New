@@ -15,6 +15,7 @@ import type {
   OrderRow,
   OrderStatus,
   ProductImageRow,
+  ProductOptionRow,
   ProductRow,
   SeasonalCampaignRow,
   StockMovementRow,
@@ -57,6 +58,7 @@ export interface MaterialPurchaseWithItems extends MaterialPurchase {
 
 export type Category = CategoryRow;
 export type ProductImage = ProductImageRow;
+export type ProductOption = ProductOptionRow;
 export type SeasonalCampaign = SeasonalCampaignRow;
 export type Customer = CustomerRow;
 export type CustomerWithBirthday = CustomerWithBirthdayRow;
@@ -67,6 +69,7 @@ export type WhatsAppMessageLog = WhatsAppMessageLogRow;
 export interface Product extends ProductRow {
   category: Pick<CategoryRow, "id" | "name" | "slug"> | null;
   images: ProductImage[];
+  options: ProductOption[];
 }
 
 /** Subconjunto público e seguro de store_settings (sem campos administrativos). */
@@ -90,10 +93,23 @@ export interface ProductPricing {
 
 export interface CartItem {
   productId: string;
+  /** Opção de compra (subproduto/kit) selecionada — `null` para compra
+   * avulsa normal, por unidade. */
+  optionId: string | null;
+  /** Nome já combinado para exibição/pedido (ex: "Lacinho — Kit 20
+   * lacinhos") — ver `buildCartItemName` em `features/cart`. */
   name: string;
   slug: string;
+  /** Preço da LINHA (por unidade avulsa, ou preço total de 1 pacote da
+   * opção — nunca multiplicado pela quantidade física do pacote). */
   unitPrice: number;
+  /** Quantas vezes esta linha foi adicionada — unidades avulsas, ou
+   * número de PACOTES quando há opção selecionada (nunca a quantidade
+   * física dentro do pacote). */
   quantity: number;
+  /** Quantas unidades físicas cada `quantity` representa — 1 para compra
+   * avulsa, ou a quantidade fixa da opção (ex: 20 em "Kit 20 lacinhos"). */
+  packageSize: number;
   imageUrl: string | null;
   note?: string;
 }

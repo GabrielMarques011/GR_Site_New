@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { productFormSchema } from "@/lib/validations/product";
+import { productOptionSchema } from "@/lib/validations/product-option";
 import { logAuditEvent } from "@/services/audit";
 import {
   createProduct,
@@ -14,6 +15,13 @@ import {
   deleteProductImage,
   uploadProductImage,
 } from "@/services/product-images";
+import {
+  bulkCreateProductOptions,
+  createProductOption,
+  deleteProductOption,
+  setProductOptionActive,
+  updateProductOption,
+} from "@/services/product-options";
 
 export interface ProductFormState {
   error: string | null;
@@ -83,10 +91,32 @@ export async function createProductAction(
     }
   }
 
+  // Mesma lógica das imagens: o produto já existe, então uma opção de
+  // compra que falhar não deve impedir a criação — o resto pode ser
+  // cadastrado depois, editando o produto.
+  let optionsCreated = 0;
+  const optionsRaw = formData.get("options");
+  if (typeof optionsRaw === "string" && optionsRaw) {
+    try {
+      const parsedOptions = JSON.parse(optionsRaw);
+      if (Array.isArray(parsedOptions)) {
+        const validOptions = parsedOptions
+          .map((item) => productOptionSchema.safeParse(item))
+          .filter((result) => result.success)
+          .map((result) => result.data);
+        await bulkCreateProductOptions(id, validOptions);
+        optionsCreated = validOptions.length;
+      }
+    } catch (error) {
+      console.error("Falha ao criar opções de compra do novo produto:", error);
+    }
+  }
+
   await logAuditEvent("product.create", "products", id, {
     name: parsed.data.name,
     imagesUploaded: imageFiles.length - imageErrors.length,
     imageErrors: imageErrors.length || undefined,
+    optionsCreated: optionsCreated || undefined,
   });
 
   revalidateProductPaths();
@@ -173,5 +203,107 @@ export async function deleteProductImageAction(
   imageId: string,
 ) {
   await deleteProductImage(imageId);
+  revalidatePath(`/administracao/produtos/${productId}`);
+}
+
+export interface ProductOptionFormState {
+  error: string | null;
+  fieldErrors?: Record<string, string>;
+}
+
+function parseProductOptionForm(formData: FormData) {
+  return productOptionSchema.safeParse({
+    name: formData.get("name"),
+    quantity: formData.get("quantity"),
+    price: formData.get("price"),
+    active: formData.get("active") === "on",
+    display_order: formData.get("display_order") || 0,
+  });
+}
+
+export async function createProductOptionAction(
+  productId: string,
+  _prevState: ProductOptionFormState,
+  formData: FormData,
+): Promise<ProductOptionFormState> {
+  const parsed = parseProductOptionForm(formData);
+
+  if (!parsed.success) {
+    return {
+      error: "Revise os campos destacados.",
+      fieldErrors: Object.fromEntries(
+        parsed.error.issues.map((issue) => [
+          issue.path.join("."),
+          issue.message,
+        ]),
+      ),
+    };
+  }
+
+  try {
+    await createProductOption(productId, parsed.data);
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Falha ao criar opção.",
+    };
+  }
+
+  await logAuditEvent("product.update", "products", productId, {
+    optionAdded: parsed.data.name,
+  });
+  revalidatePath(`/administracao/produtos/${productId}`);
+  return { error: null };
+}
+
+export async function updateProductOptionAction(
+  productId: string,
+  optionId: string,
+  _prevState: ProductOptionFormState,
+  formData: FormData,
+): Promise<ProductOptionFormState> {
+  const parsed = parseProductOptionForm(formData);
+
+  if (!parsed.success) {
+    return {
+      error: "Revise os campos destacados.",
+      fieldErrors: Object.fromEntries(
+        parsed.error.issues.map((issue) => [
+          issue.path.join("."),
+          issue.message,
+        ]),
+      ),
+    };
+  }
+
+  try {
+    await updateProductOption(optionId, parsed.data);
+  } catch (error) {
+    return {
+      error:
+        error instanceof Error ? error.message : "Falha ao atualizar opção.",
+    };
+  }
+
+  revalidatePath(`/administracao/produtos/${productId}`);
+  return { error: null };
+}
+
+export async function deleteProductOptionAction(
+  productId: string,
+  optionId: string,
+) {
+  await deleteProductOption(optionId);
+  await logAuditEvent("product.update", "products", productId, {
+    optionDeleted: optionId,
+  });
+  revalidatePath(`/administracao/produtos/${productId}`);
+}
+
+export async function toggleProductOptionActiveAction(
+  productId: string,
+  optionId: string,
+  active: boolean,
+) {
+  await setProductOptionActive(optionId, active);
   revalidatePath(`/administracao/produtos/${productId}`);
 }

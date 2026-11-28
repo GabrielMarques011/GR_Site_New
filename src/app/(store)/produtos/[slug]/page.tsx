@@ -143,6 +143,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
               unitPrice={computeProductPricing(product).finalPrice}
               imageUrl={cover?.image_url ?? null}
               maxQuantity={product.stock_quantity}
+              options={product.options}
             />
           </div>
         </div>

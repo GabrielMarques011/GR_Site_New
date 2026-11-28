@@ -1,6 +1,7 @@
 "use server";
 
 import { computeProductPricing } from "@/features/promotions/pricing";
+import { getActiveProductOptionsByIds } from "@/services/product-options";
 import { getProductsByIds } from "@/services/products";
 import type { CartItem } from "@/types/domain";
 
@@ -34,6 +35,15 @@ export async function revalidateCart(
     freshProducts.map((product) => [product.id, product]),
   );
 
+  // Opções (kits) buscadas à parte — `getProductsByIds` não embute opções
+  // (a validação de preço no carrinho precisa delas, mas a listagem/home
+  // não, então não vale o custo extra ali). Nunca confia no preço do kit
+  // vindo do navegador: sempre revalida contra a opção ativa no banco.
+  const optionIds = clientItems
+    .map((item) => item.optionId)
+    .filter((id): id is string => Boolean(id));
+  const freshOptionsById = await getActiveProductOptionsByIds(optionIds);
+
   const issues: CartIssue[] = [];
   const items: CartItem[] = [];
 
@@ -49,11 +59,50 @@ export async function revalidateCart(
       continue;
     }
 
-    const { finalPrice } = computeProductPricing(product);
     const quantity = Math.min(
       Math.max(1, Math.trunc(clientItem.quantity)),
       MAX_QUANTITY_PER_ITEM,
     );
+
+    if (clientItem.optionId) {
+      const option = freshOptionsById.get(clientItem.optionId);
+
+      if (!option || option.product_id !== product.id) {
+        // Opção removida, desativada ou trocada de produto — some do
+        // carrinho em vez de arriscar cobrar um valor que não existe mais.
+        issues.push({
+          productId: product.id,
+          name: clientItem.name,
+          type: "removed",
+        });
+        continue;
+      }
+
+      if (Math.abs(option.price - clientItem.unitPrice) > 0.001) {
+        issues.push({
+          productId: product.id,
+          name: clientItem.name,
+          type: "price_changed",
+          previousPrice: clientItem.unitPrice,
+          newPrice: option.price,
+        });
+      }
+
+      items.push({
+        productId: product.id,
+        optionId: option.id,
+        name: `${product.name} — ${option.name}`,
+        slug: product.slug,
+        unitPrice: option.price,
+        quantity,
+        packageSize: option.quantity,
+        imageUrl: product.images[0]?.image_url ?? null,
+        note: clientItem.note,
+      });
+      continue;
+    }
+
+    const { finalPrice } = computeProductPricing(product);
 
     if (Math.abs(finalPrice - clientItem.unitPrice) > 0.001) {
       issues.push({
@@ -67,10 +116,12 @@ export async function revalidateCart(
 
     items.push({
       productId: product.id,
+      optionId: null,
       name: product.name,
       slug: product.slug,
       unitPrice: finalPrice,
       quantity,
+      packageSize: 1,
       imageUrl: product.images[0]?.image_url ?? null,
       note: clientItem.note,
     });

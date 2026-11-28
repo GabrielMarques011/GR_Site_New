@@ -19,14 +19,33 @@ interface CartContextValue {
   totalItems: number;
   subtotal: number;
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  updateNote: (productId: string, note: string) => void;
-  removeItem: (productId: string) => void;
+  updateQuantity: (
+    productId: string,
+    optionId: string | null,
+    quantity: number,
+  ) => void;
+  updateNote: (
+    productId: string,
+    optionId: string | null,
+    note: string,
+  ) => void;
+  removeItem: (productId: string, optionId: string | null) => void;
   clear: () => void;
   replaceItems: (items: CartItem[]) => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
+
+/** Uma linha do carrinho é identificada pelo produto **e** pela opção de
+ * compra selecionada — duas opções diferentes do mesmo produto (ex: uma
+ * unidade avulsa e um "Kit 20") nunca devem se misturar na mesma linha. */
+function isSameLine(
+  entry: CartItem,
+  productId: string,
+  optionId: string | null,
+): boolean {
+  return entry.productId === productId && entry.optionId === optionId;
+}
 
 function readFromStorage(): CartItem[] {
   if (typeof window === "undefined") return [];
@@ -66,12 +85,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = useCallback<CartContextValue["addItem"]>(
     (item, quantity = 1) => {
       setItems((current) => {
-        const existing = current.find(
-          (entry) => entry.productId === item.productId,
+        const existing = current.find((entry) =>
+          isSameLine(entry, item.productId, item.optionId),
         );
         if (existing) {
           return current.map((entry) =>
-            entry.productId === item.productId
+            isSameLine(entry, item.productId, item.optionId)
               ? { ...entry, quantity: entry.quantity + quantity }
               : entry,
           );
@@ -83,13 +102,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const updateQuantity = useCallback<CartContextValue["updateQuantity"]>(
-    (productId, quantity) => {
+    (productId, optionId, quantity) => {
       setItems((current) => {
         if (quantity <= 0) {
-          return current.filter((entry) => entry.productId !== productId);
+          return current.filter(
+            (entry) => !isSameLine(entry, productId, optionId),
+          );
         }
         return current.map((entry) =>
-          entry.productId === productId ? { ...entry, quantity } : entry,
+          isSameLine(entry, productId, optionId)
+            ? { ...entry, quantity }
+            : entry,
         );
       });
     },
@@ -97,11 +120,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const updateNote = useCallback<CartContextValue["updateNote"]>(
-    (productId, note) => {
+    (productId, optionId, note) => {
       const trimmed = note.trim();
       setItems((current) =>
         current.map((entry) =>
-          entry.productId === productId
+          isSameLine(entry, productId, optionId)
             ? { ...entry, note: trimmed === "" ? undefined : note }
             : entry,
         ),
@@ -111,9 +134,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   );
 
   const removeItem = useCallback<CartContextValue["removeItem"]>(
-    (productId) => {
+    (productId, optionId) => {
       setItems((current) =>
-        current.filter((entry) => entry.productId !== productId),
+        current.filter((entry) => !isSameLine(entry, productId, optionId)),
       );
     },
     [],

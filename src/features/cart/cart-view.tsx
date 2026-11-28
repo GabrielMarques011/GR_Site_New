@@ -93,6 +93,18 @@ export function CartView({
     return (
       <div className="flex flex-col items-center gap-4 py-20 text-center text-ink-500">
         <ShoppingBag className="size-12" />
+        {issues.length > 0 && (
+          <Alert variant="warning" className="w-full max-w-md text-left">
+            <p className="font-semibold">Alguns itens foram removidos:</p>
+            <ul className="mt-1 list-disc space-y-1 pl-4 font-normal">
+              {issues.map((issue, index) => (
+                <li key={`${issue.productId}-${index}`}>
+                  {ISSUE_LABELS[issue.type](issue)}
+                </li>
+              ))}
+            </ul>
+          </Alert>
+        )}
         <p>Seu carrinho está vazio.</p>
         <Link
           href="/produtos"
@@ -122,7 +134,10 @@ export function CartView({
 
         <div className="rounded-2xl border border-ink-100 bg-white px-5">
           {items.map((item) => (
-            <CartItemRow key={item.productId} item={item} />
+            <CartItemRow
+              key={`${item.productId}:${item.optionId ?? "avulso"}`}
+              item={item}
+            />
           ))}
         </div>
       </div>

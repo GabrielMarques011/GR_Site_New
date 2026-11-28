@@ -75,6 +75,18 @@ export type ProductImageRow = {
   created_at: string;
 };
 
+export type ProductOptionRow = {
+  id: string;
+  product_id: string;
+  name: string;
+  quantity: number;
+  price: number;
+  active: boolean;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type StoreSettingsRow = {
   id: string;
   store_name: string;
@@ -108,6 +120,10 @@ export type OrderItemSnapshot = {
   unit_price: number;
   subtotal: number;
   note?: string;
+  /** Opção de compra (subproduto/kit) selecionada, se houver — nunca
+   * recalculada depois: preserva o preço/nome exatos do momento da compra
+   * mesmo que a opção seja editada ou excluída posteriormente. */
+  product_option_id?: string | null;
 };
 
 export type OrderRow = {
@@ -300,6 +316,17 @@ export type Database = {
           image_url: string;
         };
         Update: Partial<ProductImageRow>;
+        Relationships: [];
+      };
+      product_options: {
+        Row: ProductOptionRow;
+        Insert: Partial<ProductOptionRow> & {
+          product_id: string;
+          name: string;
+          quantity: number;
+          price: number;
+        };
+        Update: Partial<ProductOptionRow>;
         Relationships: [];
       };
       store_settings: {

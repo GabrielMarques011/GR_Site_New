@@ -41,6 +41,13 @@
   estoque atualizado automaticamente (soma na compra, recalcula na edição,
   reverte no cancelamento — bloqueando estoque negativo), histórico com
   busca/filtros e indicadores.
+- Subprodutos/kits: opções de compra dentro de um mesmo produto (ex:
+  "Kit 20 lacinhos"), com quantidade fixa e preço próprio definido
+  manualmente — nunca calculado a partir do preço unitário. Cadastro no
+  painel (seção colapsável no formulário de produto), seletor de opção na
+  página do produto, carrinho/checkout/WhatsApp tratando cada opção como
+  sua própria linha, com revalidação de preço no servidor antes de fechar
+  o pedido.
 
 ## Pendente — depende de ação da proprietária/configuração externa
 

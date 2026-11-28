@@ -16,12 +16,15 @@ import {
   productFormSchema,
   type ProductFormValues,
 } from "@/lib/validations/product";
+import type { ProductOptionValues } from "@/lib/validations/product-option";
 import { slugify } from "@/lib/utils/slugify";
 import type { Category, SeasonalCampaign } from "@/types/domain";
 import type { Product } from "@/types/domain";
 
 import { NewProductImagesPicker } from "./new-product-images-picker";
+import { NewProductOptionsPicker } from "./new-product-options-picker";
 import { ProductImageManager } from "./product-image-manager";
+import { ProductOptionManager } from "./product-option-manager";
 
 // zod usa `coerce`/`preprocess` para campos numéricos vindos de <input>, então o
 // tipo "bruto" (pré-validação) difere do tipo validado — useForm recebe os dois
@@ -33,7 +36,11 @@ function toDatetimeLocal(value: string | null): string {
   return value.slice(0, 16);
 }
 
-function buildFormData(values: ProductFormValues, newImages: File[]): FormData {
+function buildFormData(
+  values: ProductFormValues,
+  newImages: File[],
+  newOptions: ProductOptionValues[],
+): FormData {
   const formData = new FormData();
   formData.set("name", values.name);
   formData.set("slug", values.slug);
@@ -56,6 +63,9 @@ function buildFormData(values: ProductFormValues, newImages: File[]): FormData {
   if (values.active) formData.set("active", "on");
   formData.set("display_order", String(values.display_order));
   for (const file of newImages) formData.append("images", file);
+  if (newOptions.length > 0) {
+    formData.set("options", JSON.stringify(newOptions));
+  }
   return formData;
 }
 
@@ -80,6 +90,7 @@ export function ProductForm({
     Boolean(product?.promotional_price),
   );
   const [newImages, setNewImages] = useState<File[]>([]);
+  const [newOptions, setNewOptions] = useState<ProductOptionValues[]>([]);
 
   const {
     register,
@@ -147,7 +158,9 @@ export function ProductForm({
   async function onSubmit(values: ProductFormValues) {
     setServerError(null);
     startTransition(async () => {
-      const result = await onSubmitAction(buildFormData(values, newImages));
+      const result = await onSubmitAction(
+        buildFormData(values, newImages, newOptions),
+      );
       if (result.error) {
         setServerError(result.error);
         return;
@@ -377,6 +390,23 @@ export function ProductForm({
           <NewProductImagesPicker onChange={setNewImages} />
         )}
       </div>
+
+      <details className="group border-t border-ink-100 pt-6">
+        <summary className="focus-ring mb-3 flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-ink-900">
+          <span className="transition-transform group-open:rotate-90">▶</span>
+          Opções de compra / Subprodutos
+        </summary>
+        <p className="mb-3 text-xs text-ink-500">
+          Kits e pacotes com quantidade e preço próprios (ex: &quot;Kit 5
+          lacinhos&quot; por um valor fixo). O produto continua vendido
+          normalmente por unidade mesmo sem nenhuma opção cadastrada.
+        </p>
+        {product ? (
+          <ProductOptionManager product={product} />
+        ) : (
+          <NewProductOptionsPicker onChange={setNewOptions} />
+        )}
+      </details>
 
       <div className="flex justify-end gap-3 border-t border-ink-100 pt-6">
         <Button type="button" variant="outline" onClick={() => router.back()}>

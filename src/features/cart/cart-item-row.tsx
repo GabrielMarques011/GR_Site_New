@@ -40,15 +40,24 @@ export function CartItemRow({ item }: { item: CartItem }) {
         >
           {item.name}
         </Link>
-        <p className="mt-1 text-sm text-ink-500">
-          {formatCurrency(item.unitPrice)} / unidade
-        </p>
+        {item.packageSize > 1 ? (
+          <p className="mt-1 text-sm text-ink-500">
+            {formatCurrency(item.unitPrice)} / pacote · {item.packageSize} un.
+            cada · {item.quantity * item.packageSize} un. no total
+          </p>
+        ) : (
+          <p className="mt-1 text-sm text-ink-500">
+            {formatCurrency(item.unitPrice)} / unidade
+          </p>
+        )}
 
         <div className="mt-2 flex items-center gap-3">
           <div className="flex items-center rounded-lg border border-ink-300">
             <button
               type="button"
-              onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+              onClick={() =>
+                updateQuantity(item.productId, item.optionId, item.quantity - 1)
+              }
               className="focus-ring flex size-8 items-center justify-center text-ink-700 hover:bg-ink-50"
               aria-label="Diminuir quantidade"
             >
@@ -59,7 +68,9 @@ export function CartItemRow({ item }: { item: CartItem }) {
             </span>
             <button
               type="button"
-              onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+              onClick={() =>
+                updateQuantity(item.productId, item.optionId, item.quantity + 1)
+              }
               className="focus-ring flex size-8 items-center justify-center text-ink-700 hover:bg-ink-50"
               aria-label="Aumentar quantidade"
             >
@@ -69,7 +80,7 @@ export function CartItemRow({ item }: { item: CartItem }) {
 
           <button
             type="button"
-            onClick={() => removeItem(item.productId)}
+            onClick={() => removeItem(item.productId, item.optionId)}
             className="focus-ring flex items-center gap-1 text-sm text-danger-600 hover:underline"
           >
             <Trash2 className="size-3.5" /> Remover
@@ -81,7 +92,7 @@ export function CartItemRow({ item }: { item: CartItem }) {
             <Textarea
               value={item.note ?? ""}
               onChange={(event) =>
-                updateNote(item.productId, event.target.value)
+                updateNote(item.productId, item.optionId, event.target.value)
               }
               placeholder="Ex: Gostaria desta caneca com a arte do Stitch e fundo azul"
               rows={2}
